@@ -24,6 +24,7 @@ import utils
 from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 
 '''
+
     written by wooramkang 2018.08.28
     i coded all the models
      and the bases of concepts are
@@ -46,8 +47,7 @@ from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
             
         5. for twisted face
             affine transform
-              
-        
+                   
 '''
 
 
@@ -136,6 +136,8 @@ def Autoencoder(inputs):
 
     this simple AE came from my AutoEncoder git
 
+    and
+    it's on modifying
     '''
     kernel_size = 3
     #latent_dim = 256
