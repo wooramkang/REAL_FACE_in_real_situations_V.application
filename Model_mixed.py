@@ -122,15 +122,40 @@ def inception_C(X):
         channel_axis = 1
     else:
         channel_axis = -1
+    X1 = AveragePooling2D(pool_size=(3, 3), strides=(1, 1), data_format='channels_first')(X)
+    X1 = Conv2D(256, (1, 1), strides=(1, 1))(X1)
 
+    X2 = Conv2D(256, (1, 1), strides=(1,1))(X)
+
+    X3 = Conv2D(384, (1, 1), strides=(1,1))(X)
+    X3_1 = Conv2D(256, (3, 1), strides=(1, 1))(X3)
+    X3_2 = Conv2D(256, (1, 3), strides=(1, 1))(X3)
+
+    X4 = Conv2D(384, (1, 1), strides=(1,1))(X)
+    X4 = Conv2D(448, (1, 3), strides=(1, 1))(X4)
+    X4 = Conv2D(512, (3, 1), strides=(1, 1))(X4)
+    X4_1 = Conv2D(256, (1, 3), strides=(1, 1))(X4)
+    X4_2 = Conv2D(256, (3, 1), strides=(1, 1))(X4)
+
+    X = concatenate([X1, X2, X3_1, X3_2, X4_1, X4_2], axis=channel_axis)
     return X
 
-
 def inception_reduction_A(X):
+
     if K.image_data_format() == 'channels_first':
         channel_axis = 1
     else:
         channel_axis = -1
+
+    X1 = MaxPooling2D(pool_size=(3, 3), strides=(2,2), data_format='channels_first', padding='valid')(X)
+
+    X2 = Conv2D(384, (3, 3), strides=(2,2))(X)
+
+    X3 = Conv2D(192, (1, 1), strides=(1,1))(X)
+    X3 = Conv2D(224, (3, 3), strides=(1, 1))(X3)
+    X3 = Conv2D(256, (3, 3), strides=(2, 2))(X3)
+
+    X = concatenate([X1, X2, X3], axis=channel_axis)
 
     return X
 
@@ -139,6 +164,18 @@ def inception_reduction_B(X):
         channel_axis = 1
     else:
         channel_axis = -1
+
+    X1 = MaxPooling2D(pool_size=(3, 3), strides=(2,2), data_format='channels_first', padding='valid')(X)
+
+    X2 = Conv2D(192, (1, 1), strides=(1,1))(X)
+    X2 = Conv2D(192, (3, 3), strides=(2, 2), padding='valid')(X2)
+
+    X3 = Conv2D(256, (1, 1), strides=(1,1))(X)
+    X3 = Conv2D(256, (7, 1), strides=(1, 1))(X3)
+    X3 = Conv2D(320, (1, 7), strides=(1, 1))(X3)
+    X3 = Conv2D(320, (3, 3), strides=(2, 2), padding = 'valid')(X3)
+
+    X = concatenate([X1, X2, X3], axis=channel_axis)
 
     return X
 
@@ -263,8 +300,13 @@ def Model_mixed(input_shape):
     X = inception_C(X)
     X = inception_C(X)
     X = inception_C(X)
+    X = AveragePooling2D((8, 8), padding='valid')(X)
+    #X = Dropout(dropout_keep_prob)(X)
+    X = Dropout(rate= 0.2)(X)
+    X = Flatten()(X)
+    X = Dense(units=num_classes, activation='softmax')(X)
 
-    model = Model(inputs = X_input, outputs = X, name='REALFACE_Model')
+    model = Model(inputs=X_input, outputs=X, name='REAL_FACE_Model')
     return model
 
 
@@ -277,7 +319,6 @@ def triplet_loss(y_true, y_pred, alpha=0.3):
     loss = tf.reduce_sum(tf.maximum(basic_loss, 0.0))
 
     return loss
-
 
 model = Model_mixed(input_shape=(3, 96, 96))
 model.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
