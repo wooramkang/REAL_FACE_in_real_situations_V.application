@@ -308,6 +308,7 @@ def Inception_detail(X):
     X = inception_A(X)
     X = inception_A(X)
     X = inception_reduction_A(X)
+
     X = inception_B(X)
     X = inception_B(X)
     X = inception_B(X)
@@ -316,9 +317,11 @@ def Inception_detail(X):
     X = inception_B(X)
     X = inception_B(X)
     X = inception_reduction_B(X)
+
     X = inception_C(X)
     X = inception_C(X)
     X = inception_C(X)
+
     X = AveragePooling2D((8, 8), padding='valid')(X)
     X = Dropout(rate=dropout_rate)(X)
     X = Flatten()(X)
@@ -336,6 +339,7 @@ def triplet_loss(y_true, y_pred, alpha=0.3):
     loss = tf.reduce_sum(tf.maximum(basic_loss, 0.0))
 
     return loss
+
 
 def Model_mixed(input_shape):
 

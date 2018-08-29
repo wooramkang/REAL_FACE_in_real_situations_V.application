@@ -1,7 +1,8 @@
 import preprocessing.histogram_equalization as hist
-
+import preprocessing.detect_landmarks_plus_affineTransform as affine
 
 def removing_light(x_train=None, x_test=None):
+
     if x_train is not None:
         x_train_prime = []
         for _img in x_train:
@@ -34,6 +35,7 @@ def make_embedding(x_train=None, x_test=None):
         x_train = x_train.astype('float32') / 255
         x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, channels)
         input_shape = (img_rows, img_cols, 3)
+
     if x_test is not None:
         img_rows = x_test.shape[1]
         img_cols = x_test.shape[2]
@@ -44,23 +46,47 @@ def make_embedding(x_train=None, x_test=None):
 
     return x_train, x_test, input_shape
 
-def affine_trainsform(x_train=None, x_test=None):
+
+def affine_transform(x_train=None, y_train=None, x_test=None, y_test=None):
+
     if x_train is not None:
         x_train_prime = []
+        y_train_prime = []
+        i = 0
+
         for _img in x_train:
             x_train_prime.append(_img)
+            y_train_prime.append(y_train[i])
+
+            _, _img = affine.make_transformed_faceset(_img)
+            x_train_prime.append(_img)
+            y_train_prime.append(y_train[i])
+            i = i+1
+
         x_train = np.array(x_train_prime)
+        y_train = np.array(y_train_prime)
+
     else:
         pass
 
     if x_test is not None:
         x_test_prime = []
+        y_test_prime = []
+        i = 0
+
         for _img in x_test:
             x_test_prime.append(_img)
+            y_test_prime.append(y_test[i])
+
+            _, _img = affine.make_transformed_faceset(_img)
+            x_test_prime.append(_img)
+            y_test_prime.append(y_test[i])
+            i = i+1
 
         x_test = np.array(x_test_prime)
+        y_test = np.array(y_test_prime)
+
     else:
         pass
 
-    return x_train, x_test
-
+    return x_train, y_train, x_test, y_test
