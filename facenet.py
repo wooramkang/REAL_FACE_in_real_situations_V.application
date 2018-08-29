@@ -1,19 +1,11 @@
 from keras import backend as K
-import time
-from multiprocessing.dummy import Pool
+
 K.set_image_data_format('channels_first')
-import cv2
 import os
 import glob
-import numpy as np
-from numpy import genfromtxt
 import tensorflow as tf
-from utils import *
 from inception_blocks_v2 import *
-from preprocessing.LAB_luminance import *
-import preprocessing.histogram_equalization as hist
-import preprocessing.Gamma_correction as gamma
-from detect_landmarks_plus_affineTransform import *
+from preprocessing.detect_landmarks_plus_affineTransform import *
 
 PADDING = 50
 ready_to_detect_identity = True

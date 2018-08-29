@@ -7,10 +7,6 @@ import time
 from multiprocessing.dummy import Pool
 K.set_image_data_format('channels_first')
 import cv2
-import os
-import glob
-import numpy as np
-from numpy import genfromtxt
 import tensorflow as tf
 from utils import *
 from keras import backend as K
@@ -20,7 +16,6 @@ from keras.layers.normalization import BatchNormalization
 from keras.layers.pooling import MaxPooling2D, AveragePooling2D
 from keras.layers.core import Lambda, Flatten, Dense
 from PIL import Image
-import utils
 from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 
 '''
@@ -346,16 +341,19 @@ def Model_mixed(input_shape):
 
     X_input = Input(input_shape, name='model_input')
 
+    #AUTOENCODER
     X = Autoencoder(X_input)
     autoencoder = Model(X_input,
                         X(X_input), name='AE')
     autoencoder.compile(loss='mse', optimizer='adam')
 
+    #SUPER_RESOLUTION
     X = Super_resolution(X_input)
     super_resolution = Model(X_input,
                              X(X_input), name='SUPresol')
     super_resolution.compile(loss='mse', optimizer='adam')
 
+    #INCEPTION
     X = Stem_mode(X_input)
     #stem_model = Model(X_input, X,name='stem_model')
     #stem_model.compile(loss='mse', optimizer='adam')
@@ -365,20 +363,10 @@ def Model_mixed(input_shape):
                              outputs=X(X_input), name='inception_Model')
     inception_detail.compile(loss='mse', optimizer='adam')
 
+    #FINAL_MODELING
     model = Model(inputs=X_input,
                   outputs=inception_detail(super_resolution(autoencoder(X_input))), name='inception_Model')
     model.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
-
+    model.summary()
     return model
 
-
-
-
-def removing_light(train_x=None, test_x=None):
-    if train_x is not None:
-        train_x = train_x
-
-    if test_x is not None:
-        test_x = test_x
-
-    return train_x, train_y, test_x, test_y
