@@ -179,10 +179,6 @@ def inception_reduction_B(X):
 
     return X
 
-def super_resolution(X):
-
-
-    return X
 
 def Autoencoder(inputs):
     '''
@@ -240,11 +236,39 @@ def Autoencoder(inputs):
     autoencoder = Model(inputs, decoder(encoder(inputs)), name='autoencoder')
     autoencoder.summary()
     '''
+    out = Conv2D(3, (3, 3), activation='relu', padding='same', name='finaloutput')(outputs)
 
-    return outputs
+    return out
 
 
-def stem_model(X):
+def Super_resolution(X):
+
+    layer_filters = [(32,1),(32,3),(32,5),(32,7)]
+    x = X
+    output_layer = []
+
+    x = Conv2D(filters=64,
+              kernel_size=(3,3),
+
+              strides=1,
+              activation='relu',
+              padding='same')(x)
+
+    for filters, kernel_size in layer_filters:
+        output_layer.append(Conv2D(filters=filters,
+                                   kernel_size=kernel_size,
+                                   strides=1,
+                                   activation='relu',
+                                   padding='same')(x))
+
+    avg_output = Average()(output_layer)
+
+    out = Conv2D(3, (3,3), activation='relu', padding='same', name ='finaloutput')(avg_output)
+
+    return out
+
+
+def Stem_model(X):
     # input 299*299*3
     # output 35*35*384
     if K.image_data_format() == 'channels_first':
@@ -279,11 +303,11 @@ def stem_model(X):
     return X
 
 
-def Model_mixed(input_shape):
+def Inception_detail(X):
+    #params
+    num_classes = 1000
+    dropout_rate = 0.2
 
-    X_input = Input(input_shape, name='model_input')
-    X = Autoencoder(X_input)
-    X = stem_mode(X)
     X = inception_A(X)
     X = inception_A(X)
     X = inception_A(X)
@@ -301,13 +325,11 @@ def Model_mixed(input_shape):
     X = inception_C(X)
     X = inception_C(X)
     X = AveragePooling2D((8, 8), padding='valid')(X)
-    #X = Dropout(dropout_keep_prob)(X)
-    X = Dropout(rate= 0.2)(X)
+    X = Dropout(rate=dropout_rate)(X)
     X = Flatten()(X)
     X = Dense(units=num_classes, activation='softmax')(X)
 
-    model = Model(inputs=X_input, outputs=X, name='REAL_FACE_Model')
-    return model
+    return X
 
 
 def triplet_loss(y_true, y_pred, alpha=0.3):
@@ -320,5 +342,43 @@ def triplet_loss(y_true, y_pred, alpha=0.3):
 
     return loss
 
-model = Model_mixed(input_shape=(3, 96, 96))
-model.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
+def Model_mixed(input_shape):
+
+    X_input = Input(input_shape, name='model_input')
+
+    X = Autoencoder(X_input)
+    autoencoder = Model(X_input,
+                        X(X_input), name='AE')
+    autoencoder.compile(loss='mse', optimizer='adam')
+
+    X = Super_resolution(X_input)
+    super_resolution = Model(X_input,
+                             X(X_input), name='SUPresol')
+    super_resolution.compile(loss='mse', optimizer='adam')
+
+    X = Stem_mode(X_input)
+    #stem_model = Model(X_input, X,name='stem_model')
+    #stem_model.compile(loss='mse', optimizer='adam')
+
+    X = inception_detail(X)
+    inception_detail = Model(inputs=X_input,
+                             outputs=X(X_input), name='inception_Model')
+    inception_detail.compile(loss='mse', optimizer='adam')
+
+    model = Model(inputs=X_input,
+                  outputs=inception_detail(super_resolution(autoencoder(X_input))), name='inception_Model')
+    model.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
+
+    return model
+
+
+
+
+def removing_light(train_x=None, test_x=None):
+    if train_x is not None:
+        train_x = train_x
+
+    if test_x is not None:
+        test_x = test_x
+
+    return train_x, train_y, test_x, test_y
