@@ -315,6 +315,7 @@ def Inception_detail(X, classes):
     X = inception_A(X)
     X = inception_A(X)
     X = inception_reduction_A(X)
+    X = Dropout(rate=dropout_rate)(X)
 
     X = inception_B(X)
     X = inception_B(X)
@@ -324,6 +325,7 @@ def Inception_detail(X, classes):
     X = inception_B(X)
     X = inception_B(X)
     X = inception_reduction_B(X)
+    X = Dropout(rate=dropout_rate)(X)
 
     X = inception_C(X)
     X = inception_C(X)
