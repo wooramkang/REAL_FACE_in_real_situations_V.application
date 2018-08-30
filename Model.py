@@ -183,7 +183,7 @@ def inception_reduction_B(X):
     return X
 
 
-def Autoencoder(inputs):
+def Autoencoder(inputs, input_shape):
     '''
     written by wooramkang 2018.08.29
 
@@ -193,63 +193,71 @@ def Autoencoder(inputs):
     it's on modifying
     '''
     kernel_size = 3
-    layer_filters = [64, 128, 256]
+    filter_norm = input_shape[1]
+    print(input_shape)
+
+    layer_filters = [int(filter_norm*3/2), int(filter_norm), int(filter_norm/2)]
     channels = 3
     x = inputs
 
-    checker = True
-
     for filters in layer_filters:
-        if checker:
-            x = Conv2D(filters=filters,
-                   kernel_size=kernel_size,
-                   strides=2,
-                   activation='relu',
-                   padding='same')(x)
-            checker = False
-        else:
-            x = Conv2D(filters=filters,
-                   kernel_size=kernel_size,
-                   strides=1,
-                   activation='relu',
-                   padding='same')(x)
-            checker = True
+        x = Conv2D(filters=filters,
+               kernel_size=kernel_size,
+               strides=1,
+               activation='relu',
+               padding='same')(x)
+        x = BatchNormalization()(x)
+        x = Activation('elu')(x)
 
     for filters in layer_filters[::-1]:
-        if checker:
-            x = Conv2DTranspose(filters=filters,
-                   kernel_size=kernel_size,
-                   strides=2,
-                   activation='relu',
-                   padding='same')(x)
-            checker = False
-        else:
-            x = Conv2DTranspose(filters=filters,
-                   kernel_size=kernel_size,
-                   strides=1,
-                   activation='relu',
-                   padding='same')(x)
-            checker = True
+        x = Conv2D(filters=filters,
+               kernel_size=kernel_size,
+               strides=1,
+               activation='relu',
+               padding='same')(x)
+        x = BatchNormalization()(x)
+        x = Activation('elu')(x)
 
-    x = Conv2DTranspose(filters=3,
+    x = Dropout(rate=0.2)(x)
+    x = Conv2D(filters=channels,
                               kernel_size=kernel_size,
-                              strides=2,
+                              strides=1,
                               activation='sigmoid',
                               padding='same',
                               name='finaloutput_AE'
                               )(x)
-
     return x
 
 
-def Super_resolution(X):
+def Super_resolution(X, input_shape):
 
-    layer_filters = [(64,1),(64,3),(64,5),(64,7)]
     x = X
     output_layer = []
+    filter_norm = input_shape[1]
 
-    x = Conv2D(filters=128,
+    x = Conv2D(filters=filter_norm,
+               kernel_size=(3, 3),
+               strides=1,
+               activation='relu',
+               padding='same')(x)
+    filter_norm = int(filter_norm/2)
+    layer_filters = [(filter_norm, 1), (filter_norm, 3), (filter_norm, 5), (filter_norm, 7)]
+
+    for filters, kernel_size in layer_filters:
+        output_layer.append(
+            Activation('elu')(
+                BatchNormalization()(Conv2D(filters=filters,
+                                            kernel_size=kernel_size,
+                                            strides=1,
+                                            activation='relu',
+                                            padding='same')(x))))
+    '''
+    written by wooramkang 2018.08. 30
+    batchnorm and relu => non biased?
+
+    x = Conv2D(filters=64,
               kernel_size=(3,3),
+
               strides=1,
               activation='relu',
               padding='same')(x)
@@ -262,7 +270,12 @@ def Super_resolution(X):
                                    padding='same')(x))
 
     avg_output = Average()(output_layer)
-    out = Conv2D(3, (2,2), activation='sigmoid', padding='same', name='finaloutput_SUPresol')(avg_output)
+
+    out = Conv2D(3, (3,3), activation='relu', padding='same', name ='finaloutput')(avg_output)
+     '''
+    avg_output = Average()(output_layer)
+    avg_output = Dropout(rate=0.2)(avg_output)
+    out = Conv2D(3, (2, 2), activation='sigmoid', padding='same', name='finaloutput_SUPresol')(avg_output)
 
     return out
 
@@ -312,7 +325,6 @@ def Inception_detail(X, classes):
     X = inception_A(X)
     X = inception_A(X)
     X = inception_reduction_A(X)
-    X = Dropout(rate=dropout_rate)(X)
 
     X = inception_B(X)
     X = inception_B(X)
@@ -322,7 +334,6 @@ def Inception_detail(X, classes):
     X = inception_B(X)
     X = inception_B(X)
     X = inception_reduction_B(X)
-    X = Dropout(rate=dropout_rate)(X)
 
     X = inception_C(X)
     X = inception_C(X)
@@ -358,7 +369,7 @@ def Model_mixed(input_shape, num_classes):
                         X(X_input), name='AE')
     autoencoder.compile(loss='mse', optimizer='adam')
     '''
-    autoencoder = Autoencoder(X_input)
+    autoencoder = Autoencoder(X_input, input_shape)
     model = Model(X_input,
                   autoencoder, name = 'stem_Model')
     model.summary()
@@ -370,7 +381,7 @@ def Model_mixed(input_shape, num_classes):
                              X(X_input), name='SUPresol')
     super_resolution.compile(loss='mse', optimizer='adam')
     '''
-    super_resolution = Super_resolution(autoencoder)
+    super_resolution = Super_resolution(autoencoder, input_shape)
     model = Model(X_input,
                   super_resolution, name = 'stem_Model')
     model.summary()
@@ -382,6 +393,7 @@ def Model_mixed(input_shape, num_classes):
     #stem_model.compile(loss='mse', optimizer='adam')
     '''
     stem_model = Stem_model(super_resolution)
+    #stem_model = Stem_model(autoencoder)
     model = Model(X_input,
                   stem_model, name = 'stem_Model')
     model.summary()
@@ -395,8 +407,8 @@ def Model_mixed(input_shape, num_classes):
     '''
     inception_detail = Inception_detail(stem_model, num_classes)
     #FINAL_MODELING
-    model = Model(inputs=X_input,
-                  outputs = inception_detail, name = 'inception_Model')
+    model = Model(X_input,
+                  inception_detail, name = 'inception_Model')
     model.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
     model.summary()
     return model

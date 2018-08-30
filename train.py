@@ -1,4 +1,4 @@
-from making_Model import *
+from Model import *
 from DataWeight_load import *
 from preprocessing import *
 
@@ -18,10 +18,40 @@ def train():
     x_train, x_test = Removing_light(x_train, x_test)
     x_train, x_test, input_shape = Make_embedding(x_train, x_test)
     '''
-
+    '''
+    written by wooram kang 2018.08.30
+    img size minimum => 155 * 155
+    '''
     # MAKE LEARNING MODEL
-    input_shape = (3, 196, 196)
-    model = Model_mixed(input_shape,5750)
+    input_shape = (3, 155, 155)
+    model = Model_mixed(input_shape, 500)
+    '''
+    written by wooramkang 2018.08.30
+    numbers of params in networks
+    
+    shape / classes
+    
+    3 160 160 / 500
+    ==================================================================================================
+    Total params: 39,479,034
+    Trainable params: 39,420,922
+    Non-trainable params: 58,112
+    
+    3 160 160 / 1500
+    ==================================================================================================
+    Total params: 41,016,034
+    Trainable params: 40,957,922
+    Non-trainable params: 58,112
+    __________________________________________________________________________________________________
+
+    3 300 300 / 500
+    ==================================================================================================
+    Total params: 44,261,874
+    Trainable params: 44,202,082
+    Non-trainable params: 59,792
+    __________________________________________________________________________________________________
+there is no pretrained-weights
+    '''
 
     try:
         model = Weight_load(model, weights_path)

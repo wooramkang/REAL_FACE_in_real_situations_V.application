@@ -1,3 +1,7 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+
 import os
 import glob
 import numpy as np
@@ -22,6 +26,23 @@ def Img_load(image_path=""):
         y_data.append(identity)
 
     return x_data, y_data
+
+
+def split_embed_work(raw_data):
+    ans_set = []
+
+    num = 0
+    for i in range(raw_data):
+        if i not in ans_set:
+            ans_set.append(i)
+
+#    dist = []
+#    for i, ans in enumerate(ans_set):
+
+
+
+
+    return ans_set, raw_data
 
 
 def Data_shuffle(x_data, y_data):

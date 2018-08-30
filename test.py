@@ -1,5 +1,5 @@
 
-from making_Model import *
+from Model import *
 from DataWeight_load import *
 from preprocessing import *
 
