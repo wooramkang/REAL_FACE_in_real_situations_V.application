@@ -193,8 +193,7 @@ def Autoencoder(inputs):
     it's on modifying
     '''
     kernel_size = 3
-    #latent_dim = 256
-    layer_filters = [256, 128, 64]
+    layer_filters = [64, 128, 256]
     channels = 3
     x = inputs
 
@@ -251,7 +250,6 @@ def Super_resolution(X):
 
     x = Conv2D(filters=128,
               kernel_size=(3,3),
-
               strides=1,
               activation='relu',
               padding='same')(x)
@@ -264,8 +262,7 @@ def Super_resolution(X):
                                    padding='same')(x))
 
     avg_output = Average()(output_layer)
-
-    out = Conv2D(3, (2,2), activation='relu', padding='same', name ='finaloutput_SUPresol')(avg_output)
+    out = Conv2D(3, (2,2), activation='sigmoid', padding='same', name='finaloutput_SUPresol')(avg_output)
 
     return out
 
