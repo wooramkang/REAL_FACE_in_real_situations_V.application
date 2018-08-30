@@ -17,11 +17,11 @@ def train():
     x_train, y_train, x_test, y_test = Affine_transform(x_train, y_train, x_test, y_test)
     x_train, x_test = Removing_light(x_train, x_test)
     x_train, x_test, input_shape = Make_embedding(x_train, x_test)
-
-    #MAKE LEARNING MODEL
     '''
+
+    # MAKE LEARNING MODEL
     input_shape = (3, 196, 196)
-    model = Model_mixed(input_shape,500)
+    model = Model_mixed(input_shape,5750)
 
     try:
         model = Weight_load(model, weights_path)

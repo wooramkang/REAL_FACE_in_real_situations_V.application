@@ -194,7 +194,7 @@ def Autoencoder(inputs):
     '''
     kernel_size = 3
     #latent_dim = 256
-    layer_filters = [64, 128, 256]
+    layer_filters = [256, 128, 64]
     channels = 3
     x = inputs
 
