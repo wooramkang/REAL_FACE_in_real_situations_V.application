@@ -18,7 +18,7 @@ def Img_load(image_path=""):
         x_data.append(img_)
 
         identity = os.path.splitext(os.path.basename(file))[0]
-        identity = str(identity).split('_')[0]
+        #identity = str(identity).split('_')[0]
         y_data.append(identity)
 
     return x_data, y_data
