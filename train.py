@@ -21,10 +21,12 @@ def train():
     #MAKE LEARNING MODEL
     '''
     input_shape = (3, 299, 299)
-    model = Model_mixed(input_shape)
+    model = Model_mixed(input_shape,1040)
 
-#    model = Weight_load(model, weights_path)
-
+    try:
+        model = Weight_load(model, weights_path)
+    except:
+        print("there is no pretrained-weights")
 
 if __name__ == "__main__":
     train()

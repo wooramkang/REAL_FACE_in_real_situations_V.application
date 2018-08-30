@@ -75,19 +75,20 @@ def inception_A(X):
     else:
         channel_axis = -1
 
-    X1 = AveragePooling2D(pool_size=(3, 3), strides=(1,1), data_format='channels_first')(X)
-    X1 = Conv2D(64, (1, 1), strides=(1, 1))(X1)
+    branch_0 = conv2d_bn(X, 96, 1, 1)
 
-    X2 = Conv2D(96, (1, 1), strides=(1,1))(X)
+    branch_1 = conv2d_bn(X, 64, 1, 1)
+    branch_1 = conv2d_bn(branch_1, 96, 3, 3)
 
-    X3 = Conv2D(64, (1, 1), strides=(1,1))(X)
-    X3 = Conv2D(96, (3, 3), strides=(1, 1))(X3)
+    branch_2 = conv2d_bn(X, 64, 1, 1)
+    branch_2 = conv2d_bn(branch_2, 96, 3, 3)
+    branch_2 = conv2d_bn(branch_2, 96, 3, 3)
 
-    X4 = Conv2D(64, (1, 1), strides=(1,1))(X)
-    X4 = Conv2D(96, (3, 3), strides=(1, 1))(X4)
-    X4 = Conv2D(96, (3, 3), strides=(1, 1))(X4)
+    branch_3 = AveragePooling2D((3,3), strides=(1,1), padding='same')(X)
+    branch_3 = conv2d_bn(branch_3, 96, 1, 1)
 
-    X = concatenate([X1, X2, X3, X4], axis=channel_axis)
+    x = concatenate([branch_0, branch_1, branch_2, branch_3], axis=channel_axis)
+
     return X
 
 
@@ -98,22 +99,22 @@ def inception_B(X):
     else:
         channel_axis = -1
 
-    X1 = AveragePooling2D(pool_size=(3, 3), strides=(1, 1), data_format='channels_first')(X)
-    X1 = Conv2D(128, (1, 1), strides=(1, 1))(X1)
+    branch_0 = conv2d_bn(X, 384, 1, 1)
 
-    X2 = Conv2D(384, (1, 1), strides=(1,1))(X)
+    branch_1 = conv2d_bn(X, 192, 1, 1)
+    branch_1 = conv2d_bn(branch_1, 224, 1, 7)
+    branch_1 = conv2d_bn(branch_1, 256, 7, 1)
 
-    X3 = Conv2D(192, (1, 1), strides=(1,1))(X)
-    X3 = Conv2D(224, (7, 1), strides=(1, 1))(X3)
-    X3 = Conv2D(256, (1, 7), strides=(1, 1))(X3)
+    branch_2 = conv2d_bn(X, 192, 1, 1)
+    branch_2 = conv2d_bn(branch_2, 192, 7, 1)
+    branch_2 = conv2d_bn(branch_2, 224, 1, 7)
+    branch_2 = conv2d_bn(branch_2, 224, 7, 1)
+    branch_2 = conv2d_bn(branch_2, 256, 1, 7)
 
-    X4 = Conv2D(192, (1, 1), strides=(1,1))(X)
-    X4 = Conv2D(192, (1, 7), strides=(1, 1))(X4)
-    X4 = Conv2D(224, (7, 1), strides=(1, 1))(X4)
-    X4 = Conv2D(224, (1, 7), strides=(1, 1))(X4)
-    X4 = Conv2D(256, (7, 1), strides=(1, 1))(X4)
+    branch_3 = AveragePooling2D((3,3), strides=(1,1), padding='same')(X)
+    branch_3 = conv2d_bn(branch_3, 128, 1, 1)
 
-    X = concatenate([X1, X2, X3, X4], axis=channel_axis)
+    X = concatenate([branch_0, branch_1, branch_2, branch_3], axis=channel_axis)
     return X
 
 
@@ -122,22 +123,26 @@ def inception_C(X):
         channel_axis = 1
     else:
         channel_axis = -1
-    X1 = AveragePooling2D(pool_size=(3, 3), strides=(1, 1), data_format='channels_first')(X)
-    X1 = Conv2D(256, (1, 1), strides=(1, 1))(X1)
+    branch_0 = conv2d_bn(X, 256, 1, 1)
 
-    X2 = Conv2D(256, (1, 1), strides=(1,1))(X)
+    branch_1 = conv2d_bn(X, 384, 1, 1)
+    branch_10 = conv2d_bn(branch_1, 256, 1, 3)
+    branch_11 = conv2d_bn(branch_1, 256, 3, 1)
+    branch_1 = concatenate([branch_10, branch_11], axis=channel_axis)
 
-    X3 = Conv2D(384, (1, 1), strides=(1,1))(X)
-    X3_1 = Conv2D(256, (3, 1), strides=(1, 1))(X3)
-    X3_2 = Conv2D(256, (1, 3), strides=(1, 1))(X3)
 
-    X4 = Conv2D(384, (1, 1), strides=(1,1))(X)
-    X4 = Conv2D(448, (1, 3), strides=(1, 1))(X4)
-    X4 = Conv2D(512, (3, 1), strides=(1, 1))(X4)
-    X4_1 = Conv2D(256, (1, 3), strides=(1, 1))(X4)
-    X4_2 = Conv2D(256, (3, 1), strides=(1, 1))(X4)
+    branch_2 = conv2d_bn(X, 384, 1, 1)
+    branch_2 = conv2d_bn(branch_2, 448, 3, 1)
+    branch_2 = conv2d_bn(branch_2, 512, 1, 3)
+    branch_20 = conv2d_bn(branch_2, 256, 1, 3)
+    branch_21 = conv2d_bn(branch_2, 256, 3, 1)
+    branch_2 = concatenate([branch_20, branch_21], axis=channel_axis)
 
-    X = concatenate([X1, X2, X3_1, X3_2, X4_1, X4_2], axis=channel_axis)
+    branch_3 = AveragePooling2D((3, 3), strides=(1, 1), padding='same')(X)
+    branch_3 = conv2d_bn(branch_3, 256, 1, 1)
+
+    X = concatenate([branch_0, branch_1, branch_2, branch_3], axis=channel_axis)
+
     return X
 
 def inception_reduction_A(X):
@@ -147,16 +152,15 @@ def inception_reduction_A(X):
     else:
         channel_axis = -1
 
-    X1 = MaxPooling2D(pool_size=(3, 3), strides=(2,2), data_format='channels_first', padding='valid')(X)
+    branch_0 = conv2d_bn(X, 384, 3, 3, strides=(2,2), padding='valid')
 
-    X2 = Conv2D(384, (3, 3), strides=(2,2))(X)
+    branch_1 = conv2d_bn(X, 192, 1, 1)
+    branch_1 = conv2d_bn(branch_1, 224, 3, 3)
+    branch_1 = conv2d_bn(branch_1, 256, 3, 3, strides=(2,2), padding='valid')
 
-    X3 = Conv2D(192, (1, 1), strides=(1,1))(X)
-    X3 = Conv2D(224, (3, 3), strides=(1, 1))(X3)
-    X3 = Conv2D(256, (3, 3), strides=(2, 2))(X3)
+    branch_2 = MaxPooling2D((3,3), strides=(2,2), padding='valid')(X)
 
-    X = concatenate([X1, X2, X3], axis=channel_axis)
-
+    x = concatenate([branch_0, branch_1, branch_2], axis=channel_axis)
     return X
 
 def inception_reduction_B(X):
@@ -165,18 +169,17 @@ def inception_reduction_B(X):
     else:
         channel_axis = -1
 
-    X1 = MaxPooling2D(pool_size=(3, 3), strides=(2,2), data_format='channels_first', padding='valid')(X)
+    branch_0 = conv2d_bn(X, 192, 1, 1)
+    branch_0 = conv2d_bn(branch_0, 192, 3, 3, strides=(2, 2), padding='valid')
 
-    X2 = Conv2D(192, (1, 1), strides=(1,1))(X)
-    X2 = Conv2D(192, (3, 3), strides=(2, 2), padding='valid')(X2)
+    branch_1 = conv2d_bn(X, 256, 1, 1)
+    branch_1 = conv2d_bn(branch_1, 256, 1, 7)
+    branch_1 = conv2d_bn(branch_1, 320, 7, 1)
+    branch_1 = conv2d_bn(branch_1, 320, 3, 3, strides=(2,2), padding='valid')
 
-    X3 = Conv2D(256, (1, 1), strides=(1,1))(X)
-    X3 = Conv2D(256, (7, 1), strides=(1, 1))(X3)
-    X3 = Conv2D(320, (1, 7), strides=(1, 1))(X3)
-    X3 = Conv2D(320, (3, 3), strides=(2, 2), padding = 'valid')(X3)
+    branch_2 = MaxPooling2D((3, 3), strides=(2, 2), padding='valid')(X)
 
-    X = concatenate([X1, X2, X3], axis=channel_axis)
-
+    X = concatenate([branch_0, branch_1, branch_2], axis=channel_axis)
     return X
 
 
@@ -301,9 +304,10 @@ def Stem_model(X):
     return X
 
 
-def Inception_detail(X):
+def Inception_detail(X, classes):
     #params
-    num_classes = 1000
+    num_classes = classes
+    #num_classes = 1000
     dropout_rate = 0.2
 
     X = inception_A(X)
@@ -344,7 +348,7 @@ def triplet_loss(y_true, y_pred, alpha=0.3):
     return loss
 
 
-def Model_mixed(input_shape):
+def Model_mixed(input_shape, num_classes):
 
     X_input = Input(input_shape, name='model_input')
 
@@ -390,11 +394,10 @@ def Model_mixed(input_shape):
                              outputs=X(X_input), name='inception_Model')
     inception_detail.compile(loss='mse', optimizer='adam')
     '''
-    inception_detail = Inception_detail(stem_model)
+    inception_detail = Inception_detail(stem_model, num_classes)
     #FINAL_MODELING
     model = Model(inputs=X_input,
-                  outputs = inception_detail(X_input), name = 'inception_Model')
-
+                  outputs = inception_detail, name = 'inception_Model')
     model.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
     model.summary()
     return model
