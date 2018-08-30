@@ -1,7 +1,12 @@
-import preprocessing.histogram_equalization as hist
-import preprocessing.detect_landmarks_plus_affineTransform as affine
 
-def removing_light(x_train=None, x_test=None):
+import os
+import sys
+sys.path.append(os.path.abspath((os.path.dirname(__file__)))+'/preprocessing')
+print(os.path.abspath((os.path.dirname(__file__)))+'/preprocessing')
+import histogram_equalization as hist
+import detect_landmarks_plus_affineTransform as affine
+
+def Removing_light(x_train=None, x_test=None):
 
     if x_train is not None:
         x_train_prime = []
@@ -25,7 +30,7 @@ def removing_light(x_train=None, x_test=None):
     return x_train, x_test
 
 
-def make_embedding(x_train=None, x_test=None):
+def Make_embedding(x_train=None, x_test=None):
     input_shape = (1, 1, 3)
 
     if x_train is not None:
@@ -47,7 +52,7 @@ def make_embedding(x_train=None, x_test=None):
     return x_train, x_test, input_shape
 
 
-def affine_transform(x_train=None, y_train=None, x_test=None, y_test=None):
+def Affine_transform(x_train=None, y_train=None, x_test=None, y_test=None):
 
     if x_train is not None:
         x_train_prime = []

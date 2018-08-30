@@ -3,10 +3,12 @@ import glob
 import numpy as np
 from numpy import genfromtxt
 import cv2
+from random import shuffle
+import keras
+from keras.models import Model
 
 
-def img_load(image_path=""):
-
+def Img_load(image_path=""):
     x_data = []
     y_data = []
 
@@ -22,7 +24,7 @@ def img_load(image_path=""):
     return x_data, y_data
 
 
-def data_shuffle(x_data, y_data):
+def Data_shuffle(x_data, y_data):
     #params
     train_test_ratio = 0.7
 
@@ -30,10 +32,27 @@ def data_shuffle(x_data, y_data):
     y_train = []
     x_test = []
     y_test = []
+    data_len = len(x_data)
+    train_len = int(data_len * train_test_ratio)
+
+    train_list = shuffle(range(train_len))
+    test_list = shuffle(range(train_len, data_len))
+
+    for i in train_list:
+        x_train.append(x_data[i])
+        y_train.append(y_data[i])
+
+    for i in test_list:
+        x_test.append(x_data[i])
+        y_test.append(y_data[i])
 
     return x_train, y_train, x_test, y_test
 
 
-def Weight_load(model):
+def Weight_load(model, weights_path):
+    model = Model()
+    model.load_weights(weights_path)
+    return model
 
-    return -1
+
+
