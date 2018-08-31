@@ -8,7 +8,6 @@ from multiprocessing.dummy import Pool
 K.set_image_data_format('channels_first')
 import cv2
 import tensorflow as tf
-from utils import *
 from keras import backend as K
 from keras.layers import Conv2D, ZeroPadding2D, Activation, Input, concatenate, Reshape, Conv2DTranspose, Dropout
 from keras.layers import Average, Convolution2D
@@ -87,7 +86,7 @@ def inception_A(X):
     branch_3 = AveragePooling2D((3,3), strides=(1,1), padding='same')(X)
     branch_3 = conv2d_bn(branch_3, 96, 1, 1)
 
-    x = concatenate([branch_0, branch_1, branch_2, branch_3], axis=channel_axis, name='end_of_incept_A')
+    X = concatenate([branch_0, branch_1, branch_2, branch_3], axis=channel_axis)
 
     return X
 
@@ -114,7 +113,7 @@ def inception_B(X):
     branch_3 = AveragePooling2D((3,3), strides=(1,1), padding='same')(X)
     branch_3 = conv2d_bn(branch_3, 128, 1, 1)
 
-    X = concatenate([branch_0, branch_1, branch_2, branch_3], axis=channel_axis, name='end_of_incept_B')
+    X = concatenate([branch_0, branch_1, branch_2, branch_3], axis=channel_axis)
     return X
 
 
@@ -141,7 +140,7 @@ def inception_C(X):
     branch_3 = AveragePooling2D((3, 3), strides=(1, 1), padding='same')(X)
     branch_3 = conv2d_bn(branch_3, 256, 1, 1)
 
-    X = concatenate([branch_0, branch_1, branch_2, branch_3], axis=channel_axis, name='end_of_incept_C')
+    X = concatenate([branch_0, branch_1, branch_2, branch_3], axis=channel_axis)
 
     return X
 
@@ -160,7 +159,7 @@ def inception_reduction_A(X):
 
     branch_2 = MaxPooling2D((3,3), strides=(2,2), padding='valid')(X)
 
-    X = concatenate([branch_0, branch_1, branch_2], axis=channel_axis, name='end_of_incept_reduce_A')
+    X = concatenate([branch_0, branch_1, branch_2], axis=channel_axis)
     return X
 
 def inception_reduction_B(X):
@@ -179,7 +178,7 @@ def inception_reduction_B(X):
 
     branch_2 = MaxPooling2D((3, 3), strides=(2, 2), padding='valid')(X)
 
-    X = concatenate([branch_0, branch_1, branch_2], axis=channel_axis, name='end_of_incept_reduce_B')
+    X = concatenate([branch_0, branch_1, branch_2], axis=channel_axis)
     return X
 
 
@@ -339,7 +338,8 @@ def Inception_detail(X, classes):
     X = inception_C(X)
     X = inception_C(X)
 
-    X = AveragePooling2D((8, 8), padding='valid')(X)
+    X = AveragePooling2D((3, 3), padding='valid')(X)
+    # mkae sure filter size!
     X = Dropout(rate=dropout_rate)(X)
     X = Flatten()(X)
     X = Dense(units=num_classes, activation='softmax')(X)

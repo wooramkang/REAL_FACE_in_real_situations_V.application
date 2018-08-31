@@ -8,7 +8,7 @@ def train():
     #params
     weights_path = "/saved_models/"
     img_path = "/home/rd/recognition_reaserch/FACE/Dataset/lfw/"
-    img_size = 299 #target size
+    img_size = 160 #target size
 
     #DATA LOAD
     x_data, y_data = Img_load(img_path, img_size)
