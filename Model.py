@@ -87,7 +87,7 @@ def inception_A(X):
     branch_3 = AveragePooling2D((3,3), strides=(1,1), padding='same')(X)
     branch_3 = conv2d_bn(branch_3, 96, 1, 1)
 
-    x = concatenate([branch_0, branch_1, branch_2, branch_3], axis=channel_axis)
+    x = concatenate([branch_0, branch_1, branch_2, branch_3], axis=channel_axis, name='end_of_incept_A')
 
     return X
 
@@ -114,7 +114,7 @@ def inception_B(X):
     branch_3 = AveragePooling2D((3,3), strides=(1,1), padding='same')(X)
     branch_3 = conv2d_bn(branch_3, 128, 1, 1)
 
-    X = concatenate([branch_0, branch_1, branch_2, branch_3], axis=channel_axis)
+    X = concatenate([branch_0, branch_1, branch_2, branch_3], axis=channel_axis, name='end_of_incept_B')
     return X
 
 
@@ -141,7 +141,7 @@ def inception_C(X):
     branch_3 = AveragePooling2D((3, 3), strides=(1, 1), padding='same')(X)
     branch_3 = conv2d_bn(branch_3, 256, 1, 1)
 
-    X = concatenate([branch_0, branch_1, branch_2, branch_3], axis=channel_axis)
+    X = concatenate([branch_0, branch_1, branch_2, branch_3], axis=channel_axis, name='end_of_incept_C')
 
     return X
 
@@ -160,7 +160,7 @@ def inception_reduction_A(X):
 
     branch_2 = MaxPooling2D((3,3), strides=(2,2), padding='valid')(X)
 
-    x = concatenate([branch_0, branch_1, branch_2], axis=channel_axis)
+    X = concatenate([branch_0, branch_1, branch_2], axis=channel_axis, name='end_of_incept_reduce_A')
     return X
 
 def inception_reduction_B(X):
@@ -179,7 +179,7 @@ def inception_reduction_B(X):
 
     branch_2 = MaxPooling2D((3, 3), strides=(2, 2), padding='valid')(X)
 
-    X = concatenate([branch_0, branch_1, branch_2], axis=channel_axis)
+    X = concatenate([branch_0, branch_1, branch_2], axis=channel_axis, name='end_of_incept_reduce_B')
     return X
 
 

@@ -8,13 +8,21 @@ def train():
     #params
     weights_path = "/saved_models/"
     img_path = "/home/rd/recognition_reaserch/FACE/Dataset/lfw/"
-    img_size = 156 #target size
+    img_size = 299 #target size
 
     #DATA LOAD
     x_data, y_data = Img_load(img_path, img_size)
-    x_train, y_train, x_test, y_test = Data_shuffle(x_data, y_data)
+    x_train, y_train, x_test, y_test = Data_split(x_data, y_data)
+    print(x_train)
+    print(y_train)
+
     input_shape = (x_data.shape[1], x_data.shape[2], x_data.shape[3])
     x_train, x_test = Make_embedding(x_train, x_test)
+    y_train_ans, y_train_embed = split_embed_groundtruth(y_train)
+    print(y_train_embed)
+    print(y_train_ans)
+
+    y_test_ans, y_test_embed = split_embed_groundtruth(y_test)
     '''
     #DATA PREPROCESSING
     x_train, y_train, x_test, y_test = Affine_transform(x_train, y_train, x_test, y_test)
@@ -27,7 +35,8 @@ def train():
     '''
     # MAKE LEARNING MODEL
     #input_shape = (3, 155, 155)
-    model = Model_mixed(input_shape, 500)
+
+    model = Model_mixed(input_shape, 6000)
     '''
     written by wooramkang 2018.08.30
     numbers of params in networks
@@ -54,14 +63,13 @@ def train():
     Non-trainable params: 59,792
     __________________________________________________________________________________________________
     there is no pretrained-weights
+    
     '''
-
     try:
         model = Weight_load(model, weights_path)
     except:
         print("there is no pretrained-weights")
 
-    print(x_train.shape)
 
     #SAVE MODEL ON LEARNING
     save_dir = os.path.join(os.getcwd(), 'saved_models')
@@ -84,21 +92,26 @@ def train():
     callbacks = [early, lr_reducer, checkpoint]
 
     #TRAIN
-    model.fit(x_train, y_train,
-              validation_data=(x_test, y_test),
+    model.fit(x_train, y_train_embed,
+              validation_data=(x_test, y_test_embed),
               epochs=20,
-              batch_size=32,
+              batch_size=15,
               callbacks=callbacks)
-    #TEST
-    predict_test = model.predict(x_test)
 
-    #TEST RESULT
-    imgs = predict_test[:100]
-    print(imgs.shape)
-    imgs = (imgs * 255).astype(np.uint8)
-    imgs = imgs.reshape((10, 10, img_rows, img_cols, channels))
-    imgs = np.vstack([np.hstack(i) for i in imgs])
-    Image.fromarray(imgs).save('saved_images/sumof_img_gen.png')
+    #TEST
+    predict_test = model.predict(x_train)
+    print(predict_test)
+    predicted_set = []
+    count_cor = 0
+    k = 0
+    for i in range(predict_test):
+        predicted_set.append(y_train_ans[i])
+        if y_train_ans[i] == y_train[k]:
+            count_cor = count_cor + 1
+        k=k+1
+    print(predicted_set)
+    print(y_train)
+    print(str(count_cor/len(y_train)))
 
 if __name__ == "__main__":
     train()
