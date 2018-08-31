@@ -4,15 +4,18 @@ from preprocessing import *
 
 
 def train():
-    '''
+
     #params
-    weights_path = ""
-    img_path = ""
+    weights_path = "/saved_models/"
+    img_path = "/home/rd/recognition_reaserch/FACE/Dataset/lfw/"
+    img_size = 156 #target size
 
     #DATA LOAD
-    x_data, y_data = Img_load(img_path)
+    x_data, y_data = Img_load(img_path, img_size)
     x_train, y_train, x_test, y_test = Data_shuffle(x_data, y_data)
-
+    input_shape = (x_data.shape[1], x_data.shape[2], x_data.shape[3])
+    x_train, x_test = Make_embedding(x_train, x_test)
+    '''
     #DATA PREPROCESSING
     x_train, y_train, x_test, y_test = Affine_transform(x_train, y_train, x_test, y_test)
     x_train, x_test = Removing_light(x_train, x_test)
@@ -23,7 +26,7 @@ def train():
     img size minimum => 155 * 155
     '''
     # MAKE LEARNING MODEL
-    input_shape = (3, 155, 155)
+    #input_shape = (3, 155, 155)
     model = Model_mixed(input_shape, 500)
     '''
     written by wooramkang 2018.08.30
@@ -50,13 +53,15 @@ def train():
     Trainable params: 44,202,082
     Non-trainable params: 59,792
     __________________________________________________________________________________________________
-there is no pretrained-weights
+    there is no pretrained-weights
     '''
 
     try:
         model = Weight_load(model, weights_path)
     except:
         print("there is no pretrained-weights")
+
+    print(x_train.shape)
 
     #SAVE MODEL ON LEARNING
     save_dir = os.path.join(os.getcwd(), 'saved_models')
@@ -81,7 +86,7 @@ there is no pretrained-weights
     #TRAIN
     model.fit(x_train, y_train,
               validation_data=(x_test, y_test),
-              epochs=30,
+              epochs=20,
               batch_size=32,
               callbacks=callbacks)
     #TEST
