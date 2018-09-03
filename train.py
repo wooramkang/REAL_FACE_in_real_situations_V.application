@@ -36,7 +36,7 @@ def train():
     # MAKE LEARNING MODEL
     #input_shape = (3, 155, 155)
 
-    model = Model_mixed(input_shape, 6000)
+    model = Model_mixed(input_shape, 300)
     '''
     written by wooramkang 2018.08.30
     numbers of params in networks

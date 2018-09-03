@@ -339,11 +339,40 @@ def Inception_detail(X, classes):
     X = inception_C(X)
 
     X = AveragePooling2D((3, 3), padding='valid')(X)
+    # written by wooramkang 20018.08.31
     # mkae sure filter size!
+    # it depends on the size of img
     X = Dropout(rate=dropout_rate)(X)
     X = Flatten()(X)
     X = Dense(units=num_classes, activation='softmax')(X)
+    #X = Lambda(lambda x: K.l2_normalize(x, axis=1))(X)
+    return X
 
+
+def Inception_detail_for_face(X, classes):
+    #params
+    num_classes = classes
+    dropout_rate = 0.2
+
+    X = inception_A(X)
+#    X = inception_A(X)
+#    X = inception_A(X)
+    X = inception_reduction_A(X)
+
+    X = inception_B(X)
+#    X = inception_B(X)
+    X = inception_B(X)
+    X = inception_reduction_B(X)
+
+    X = inception_C(X)
+#    X = inception_C(X)
+#    X = inception_C(X)
+
+    X = AveragePooling2D(pool_size=(3, 3), padding='valid')(X)
+    X = Dropout(rate=dropout_rate)(X)
+    X = Flatten()(X)
+    X = Dense(num_classes, name='dense_layer')(X)
+    X = Lambda(lambda x: K.l2_normalize(x, axis=1))(X)
     return X
 
 
@@ -370,9 +399,9 @@ def Model_mixed(input_shape, num_classes):
     autoencoder.compile(loss='mse', optimizer='adam')
     '''
     autoencoder = Autoencoder(X_input, input_shape)
-    model = Model(X_input,
-                  autoencoder, name = 'stem_Model')
-    model.summary()
+    #model = Model(X_input,
+    #              autoencoder, name = 'stem_Model')
+    #model.summary()
 
     #SUPER_RESOLUTION
     '''
@@ -382,9 +411,9 @@ def Model_mixed(input_shape, num_classes):
     super_resolution.compile(loss='mse', optimizer='adam')
     '''
     super_resolution = Super_resolution(autoencoder, input_shape)
-    model = Model(X_input,
-                  super_resolution, name = 'stem_Model')
-    model.summary()
+    #model = Model(X_input,
+    #              super_resolution, name = 'stem_Model')
+    #model.summary()
 
     #INCEPTION
     '''
@@ -394,9 +423,9 @@ def Model_mixed(input_shape, num_classes):
     '''
     stem_model = Stem_model(super_resolution)
     #stem_model = Stem_model(autoencoder)
-    model = Model(X_input,
-                  stem_model, name = 'stem_Model')
-    model.summary()
+    #model = Model(X_input,
+    #              stem_model, name = 'stem_Model')
+    #model.summary()
 
     #DETAIL OF INCEPTION MODEL
     '''
@@ -405,7 +434,7 @@ def Model_mixed(input_shape, num_classes):
                              outputs=X(X_input), name='inception_Model')
     inception_detail.compile(loss='mse', optimizer='adam')
     '''
-    inception_detail = Inception_detail(stem_model, num_classes)
+    inception_detail = Inception_detail_for_face(stem_model, num_classes)
     #FINAL_MODELING
     model = Model(X_input,
                   inception_detail, name = 'inception_Model')
