@@ -2,12 +2,13 @@ from Model import *
 from DataWeight_load import *
 from preprocessing import *
 from Validation import *
+import time
 
 
 def train():
     # params
-    weights_path = "REALFACE_model_trippletloss_final.h5"
-    img_path = "/home/returnable/wooram/lfw/"
+    weights_path = "model.h5"
+    img_path = "/home/rd/recognition_reaserch/FACE/Dataset/lfw/"
     img_size = 160  # target size
 
     # DATA LOAD
@@ -24,7 +25,7 @@ def train():
     print(x_train)
     y_test_ans, y_test_embed = split_embed_groundtruth(y_test)
     '''
-    #DATA PREPROCESSING by image processing
+    #DATA PREPROCESSING
     x_train, y_train, x_test, y_test = Affine_transform(x_train, y_train, x_test, y_test)
     x_train, x_test = Removing_light(x_train, x_test)
     x_train, x_test, input_shape = Make_embedding(x_train, x_test)
@@ -88,7 +89,7 @@ def train():
                                    min_lr=0.5e-6)
     early = EarlyStopping(monitor='val_loss', min_delta=0, patience=5, verbose=1, mode='auto')
 
-    callbacks = [lr_reducer, checkpoint]
+    callbacks = [lr_reducer, early, checkpoint]
     '''
     #TRAIN
     model.fit(x_train, y_train_embed,
@@ -99,11 +100,16 @@ def train():
     '''
 
     # TEST
+    start_time = time.time()
+    predict_test = model.predict(x_test[:100])
+    fin_time = time.time()
 
-    predict_test = model.predict(x_test[:2000])
     print(predict_test)
 
-    Validation(model, y_test[:2000], y_test_ans[:2000], y_test_embed[:2000], predict_test)
+    Validation(model, y_test[:5000], y_test_ans[:5000], y_test_embed[:5000], predict_test)
+
+    print("======")
+    print(fin_time - start_time)
 
 
 if __name__ == "__main__":

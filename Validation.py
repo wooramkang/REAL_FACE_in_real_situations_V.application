@@ -65,6 +65,6 @@ def Validation(model, data_ans_raw, data_ans_emb, data_embedd, data_predicted):
 
     print("===")
     print(sum)
-    print(str(int((total_count-cor_count)/total_count)))
+    print(str(int(((total_count-cor_count)/total_count)*100)))
     print(arr_inx)
     return 1

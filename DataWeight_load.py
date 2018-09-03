@@ -7,7 +7,6 @@ import glob
 import numpy as np
 from numpy import genfromtxt
 import cv2
-from random import shuffle
 import keras
 from keras.models import Model
 
@@ -84,9 +83,5 @@ def Data_split(x_data, y_data):
 
 
 def Weight_load(model, weights_path):
-    model = Model()
     model.load_weights(weights_path)
     return model
-
-
-
