@@ -90,6 +90,7 @@ def train():
     early = EarlyStopping(monitor='val_loss', min_delta=0, patience=5, verbose=1, mode='auto')
 
     callbacks = [lr_reducer, early, checkpoint]
+    #callbacks = [lr_reducer, checkpoint]
     '''
     #TRAIN
     model.fit(x_train, y_train_embed,
@@ -98,7 +99,11 @@ def train():
               batch_size=10,
               callbacks=callbacks)
     '''
-
+    '''
+    written by wooramkang 2018. 09.03
+    be aware you need TiTan at least
+    
+    '''
     # TEST
     start_time = time.time()
     predict_test = model.predict(x_test[:100])

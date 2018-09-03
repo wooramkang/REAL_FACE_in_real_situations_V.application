@@ -346,7 +346,13 @@ def Inception_detail_for_face(X, classes):
     # params
     num_classes = classes
     dropout_rate = 0.2
-
+    '''
+    written by wooramkang 2018.09.03
+    on modeling
+    make sure the number of params in networks
+    too many = > hard to train
+    too little => hard to learn
+    '''
     X = inception_A(X)
     #    X = inception_A(X)
     #    X = inception_A(X)
