@@ -355,18 +355,18 @@ def Inception_detail_for_face(X, classes):
     dropout_rate = 0.2
 
     X = inception_A(X)
-#    X = inception_A(X)
-#    X = inception_A(X)
+    #    X = inception_A(X)
+    #    X = inception_A(X)
     X = inception_reduction_A(X)
 
     X = inception_B(X)
-#    X = inception_B(X)
+    X = inception_B(X)
     X = inception_B(X)
     X = inception_reduction_B(X)
 
     X = inception_C(X)
-#    X = inception_C(X)
-#    X = inception_C(X)
+    #    X = inception_C(X)
+    #    X = inception_C(X)
 
     X = AveragePooling2D(pool_size=(3, 3), padding='valid')(X)
     X = Dropout(rate=dropout_rate)(X)
@@ -374,7 +374,6 @@ def Inception_detail_for_face(X, classes):
     X = Dense(num_classes, name='dense_layer')(X)
     X = Lambda(lambda x: K.l2_normalize(x, axis=1))(X)
     return X
-
 
 def triplet_loss(y_true, y_pred, alpha=0.3):
 
