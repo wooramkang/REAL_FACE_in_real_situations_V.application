@@ -33,7 +33,8 @@ def train():
     '''
     '''
     written by wooram kang 2018.08.30
-    img size minimum => 155 * 155
+    img size minimum => 155 * 155 for object-detection i guess
+    
     '''
     # MAKE LEARNING MODEL
     # input_shape = (3, 155, 155)
@@ -63,7 +64,9 @@ def train():
     Total params: 44,261,874
     Trainable params: 44,202,082
     Non-trainable params: 59,792
-    __________________________________________________________________________________________________
+    _________________________________________________________
+    3 96 96 / 128
+    Total params : 14,406,662_________________________________________
     there is no pretrained-weights
     
     2018.09.04
@@ -107,7 +110,15 @@ def train():
     '''
     '''
     written by wooramkang 2018. 09.03
-    be aware you need TiTan at least
+    be aware you need TiTan at least so far
+    
+    2018. 09. 05
+    now i try to
+    
+        1. pruning
+        2. KD networks
+        3. born-again networks
+        4. fitnet / hint net 
     
     '''
     # TEST
