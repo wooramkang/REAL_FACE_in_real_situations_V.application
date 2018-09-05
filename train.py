@@ -7,9 +7,10 @@ import time
 
 def train():
     # params
-    weights_path = "model.h5"
+    weights_path = "/home/rd/recognition_reaserch/FACE/inception_v4+super_resolution+Face-align+denoisingAE+affineTransform/saved_models/model.h5"
+
     img_path = "/home/rd/recognition_reaserch/FACE/Dataset/lfw/"
-    img_size = 160  # target size
+    img_size = 96 #*96  # target size
 
     # DATA LOAD
     x_data, y_data = Img_load(img_path, img_size)
@@ -37,7 +38,7 @@ def train():
     # MAKE LEARNING MODEL
     # input_shape = (3, 155, 155)
 
-    model = Model_mixed(input_shape, 256)
+    model = Model_mixed(input_shape, 128)
     '''
     written by wooramkang 2018.08.30
     numbers of params in networks
@@ -64,9 +65,13 @@ def train():
     Non-trainable params: 59,792
     __________________________________________________________________________________________________
     there is no pretrained-weights
-
+    
+    2018.09.04
+    conditions : 
+        1. full networks of inception-v4
+        2. skipped networks of it
     '''
-    # try:
+    #try:
     model = Weight_load(model, weights_path)
     # except:
     #    print("there is no pretrained-weights")
@@ -89,15 +94,16 @@ def train():
                                    min_lr=0.5e-6)
     early = EarlyStopping(monitor='val_loss', min_delta=0, patience=5, verbose=1, mode='auto')
 
-    callbacks = [lr_reducer, early, checkpoint]
-    #callbacks = [lr_reducer, checkpoint]
+    #callbacks = [lr_reducer, early, checkpoint]
+    callbacks = [lr_reducer, checkpoint]
     '''
     #TRAIN
     model.fit(x_train, y_train_embed,
               validation_data=(x_test, y_test_embed),
-              epochs=25,
-              batch_size=10,
+              epochs=20,
+              batch_size=3,
               callbacks=callbacks)
+    
     '''
     '''
     written by wooramkang 2018. 09.03
@@ -114,6 +120,8 @@ def train():
     Validation(model, y_test[:5000], y_test_ans[:5000], y_test_embed[:5000], predict_test)
 
     print("======")
+    print(start_time)
+    print(fin_time)
     print(fin_time - start_time)
     #necessary running time
 

@@ -359,15 +359,15 @@ def Inception_detail_for_face(X, classes):
     X = inception_reduction_A(X)
 
     X = inception_B(X)
-    X = inception_B(X)
-    X = inception_B(X)
+    #X = inception_B(X)
+    #X = inception_B(X)
     X = inception_reduction_B(X)
 
     X = inception_C(X)
     #    X = inception_C(X)
     #    X = inception_C(X)
 
-    X = AveragePooling2D(pool_size=(3, 3), padding='valid')(X)
+    X = AveragePooling2D(pool_size=(1, 1), padding='valid')(X)
     X = Dropout(rate=dropout_rate)(X)
     X = Flatten()(X)
     X = Dense(num_classes, name='dense_layer')(X)
@@ -398,7 +398,7 @@ def Model_mixed(input_shape, num_classes):
     autoencoder = Autoencoder(X_input, input_shape)
     model = Model(X_input,
                   autoencoder, name='AEmodel')
-    #    model.summary()
+    #model.summary()
 
     # SUPER_RESOLUTION
     '''
@@ -410,7 +410,7 @@ def Model_mixed(input_shape, num_classes):
     super_resolution = Super_resolution(autoencoder, input_shape)
     model = Model(X_input,
                   super_resolution, name='SuReModel')
-    #    model.summary()
+    #model.summary()
 
     # INCEPTION
     '''
@@ -422,7 +422,7 @@ def Model_mixed(input_shape, num_classes):
     # stem_model = Stem_model(autoencoder)
     model = Model(X_input,
                   stem_model, name='stem_Model')
-    #    model.summary()
+    #model.summary()
 
     # DETAIL OF INCEPTION MODEL
     '''
