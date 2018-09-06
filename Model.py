@@ -226,6 +226,7 @@ def Autoencoder(inputs, input_shape):
     return x
 
 
+
 def Super_resolution(X, input_shape):
     x = X
     output_layer = []
@@ -309,7 +310,51 @@ def Stem_model(X):
     X = concatenate([branch_0, branch_1], axis=channel_axis, name='stem_out')
     return X
 
+'''
+    written by wooramkang 2018.09.05
 
+    Wow!
+'''
+
+def Distilling_neural_networks(input_shape, num_classes):
+
+    dropout_rate = 0.2
+    print(input_shape)
+    inputs = Input(input_shape, name='model_input')
+
+    x = inputs
+    X = Conv2D(1, 3, strides=1, activation='relu')(x)
+    X = BatchNormalization()(X)
+    X = Activation('elu')(X)
+    X = Flatten()(X)
+    X = Dense(num_classes * 5)(X)
+    X = Dropout(dropout_rate)(X)
+    X = Dense(num_classes * 3)(X)
+    X = Dropout(dropout_rate)(X)
+    X = Dense(num_classes)(X)
+
+    model = Model(inputs, X, name='hint_learn')
+    model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
+    model.summary()
+
+    return model
+'''
+    layer_filters = [int(num_classes * 3), int(num_classes * 2),int(num_classes * 1)]
+    for filters in layer_filters:
+        x = conv2d_bn(x, filters, 3, 3)
+
+    X = Dropout(rate=dropout_rate)(x)
+    
+    X = Stem_model(x)
+    x = inception_reduction_A(X)
+    x = inception_reduction_B(x)
+
+    X = AveragePooling2D(pool_size=(1, 1), padding='valid')(x)
+    X = Dropout(rate=dropout_rate)(X)
+    X = Flatten()(X)
+    X = Dense(num_classes, name='dense_layer')(X)
+    
+'''
 def Inception_detail(X, classes):
     # params
     num_classes = classes
@@ -383,6 +428,7 @@ def triplet_loss(y_true, y_pred, alpha=0.3):
     loss = tf.reduce_sum(tf.maximum(basic_loss, 0.0))
 
     return loss
+
 
 
 def Model_mixed(input_shape, num_classes):
