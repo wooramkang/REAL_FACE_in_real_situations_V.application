@@ -323,14 +323,37 @@ def Distilling_neural_networks(input_shape, num_classes):
     inputs = Input(input_shape, name='model_input')
 
     x = inputs
-    X = Conv2D(1, 3, strides=1, activation='relu')(x)
+    '''
+    written by wooramkang 2018.09.07
+    step_size should be 
+    
+    #96  8
+    #160 16
+    #plus 8 per 64
+    '''
+
+    step_size = int(((input_shape[1] - 96)/64)*8 + 8)
+
+    X = Conv2D(1, step_size, strides=1, activation='relu')(x)
     X = BatchNormalization()(X)
     X = Activation('elu')(X)
+    X = Conv2D(step_size, 1, strides=2, activation='relu')(X)
+    X = BatchNormalization()(X)
+    X = Activation('elu')(X)
+    X = Conv2D(1, step_size, strides=1, activation='relu')(X)
+    X = BatchNormalization()(X)
+    X = Activation('elu')(X)
+    '''
+    written by wooramkang 2018.09.07
+        
+        the size of shape at this moment would be bigger than original-v or same with that
+    
+    '''
     X = Flatten()(X)
+    X = Dense(num_classes * 10)(X)
+    #X = Dropout(dropout_rate)(X)
     X = Dense(num_classes * 5)(X)
-    X = Dropout(dropout_rate)(X)
-    X = Dense(num_classes * 3)(X)
-    X = Dropout(dropout_rate)(X)
+    #X = Dropout(dropout_rate)(X)
     X = Dense(num_classes)(X)
 
     model = Model(inputs, X, name='hint_learn')
@@ -338,12 +361,10 @@ def Distilling_neural_networks(input_shape, num_classes):
     model.summary()
 
     return model
-'''
-    layer_filters = [int(num_classes * 3), int(num_classes * 2),int(num_classes * 1)]
-    for filters in layer_filters:
-        x = conv2d_bn(x, filters, 3, 3)
 
-    X = Dropout(rate=dropout_rate)(x)
+
+
+'''
     
     X = Stem_model(x)
     x = inception_reduction_A(X)
@@ -355,6 +376,8 @@ def Distilling_neural_networks(input_shape, num_classes):
     X = Dense(num_classes, name='dense_layer')(X)
     
 '''
+
+
 def Inception_detail(X, classes):
     # params
     num_classes = classes
@@ -398,14 +421,20 @@ def Inception_detail_for_face(X, classes):
     too many = > hard to train
     too little => hard to learn
     '''
+
     X = inception_A(X)
+    #    X = inception_A(X)
     #    X = inception_A(X)
     #    X = inception_A(X)
     X = inception_reduction_A(X)
 
     X = inception_B(X)
-    #X = inception_B(X)
-    #X = inception_B(X)
+    #   X = inception_B(X)
+    #   X = inception_B(X)
+    #   X = inception_B(X)
+    #   X = inception_B(X)
+    #   X = inception_B(X)
+    #   X = inception_B(X)
     X = inception_reduction_B(X)
 
     X = inception_C(X)

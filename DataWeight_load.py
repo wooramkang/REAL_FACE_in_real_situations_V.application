@@ -18,17 +18,19 @@ def Img_load(image_path, img_szie ):
     # glob.glob("images/*"):
     folders = os.listdir(image_path)
     for name in folders:
-        #print(name)
+        count = 0
         for file in glob.glob(image_path+name+"/*"):
+            count = count + 1
             img_ = cv2.imread(file)
             img_ = cv2.resize(img_, (img_szie, img_szie))
-            #print(img_.shape)
             img_ = np.transpose(img_, (2, 0, 1))
             x_data.append(img_)
             identity = os.path.splitext(os.path.basename(file))[0]
             #identity = str(identity).split('_')[0]
             #y_data.append(identity)
             y_data.append(name)
+            if count == 10 :
+                break
 
     print(len(x_data))
     print(len(y_data))

@@ -7,23 +7,18 @@ import time
 
 def train():
     # params
-    weights_path = "/home/rd/recognition_reaserch/FACE/inception_v4+super_resolution+Face-align+denoisingAE+affineTransform/saved_models/model.h5"
-
     img_path = "/home/rd/recognition_reaserch/FACE/Dataset/lfw/"
+    #img_path = "/home/rd/recognition_reaserch/FACE/Dataset/VGGFace2/raw/"
     img_size = 96 #*96  # target size
+    num_classes = 128
 
     # DATA LOAD
     x_data, y_data = Img_load(img_path, img_size)
     x_train, y_train, x_test, y_test = Data_split(x_data, y_data)
-    print(x_train)
-    print(y_train)
 
     input_shape = (x_data.shape[1], x_data.shape[2], x_data.shape[3])
     x_train, x_test = Make_embedding(x_train, x_test)
     y_train_ans, y_train_embed = split_embed_groundtruth(y_train)
-    print(y_train_embed)
-    print(y_train_ans)
-    print(x_train)
     y_test_ans, y_test_embed = split_embed_groundtruth(y_test)
     '''
     #DATA PREPROCESSING DEPENDING ON SITUATIONS
@@ -31,13 +26,10 @@ def train():
     x_train, x_test = Removing_light(x_train, x_test)
     x_train, x_test, input_shape = Make_embedding(x_train, x_test)
     '''
-    '''
-    written by wooram kang 2018.08.30
-    img size minimum => 155 * 155 for object-detection i guess
-    
-    '''
+
     # MAKE LEARNING MODEL
-    model = Model_mixed(input_shape, 128)
+    model = Model_mixed(input_shape, num_classes)
+    model_hint = Distilling_neural_networks(input_shape, num_classes)
     '''
     written by wooramkang 2018.08.30
     numbers of params in networks
@@ -72,10 +64,11 @@ def train():
         1. full networks of inception-v4
         2. skipped networks of it
     '''
+    weights_path = "/home/rd/recognition_reaserch/FACE/inception_v4+super_resolution+Face-align+denoisingAE+affineTransform/saved_models/model.h5"
     try:
         model = Weight_load(model, weights_path)
     except:
-        print("there is no pretrained-weights")
+        print("there is no pretrained-weights_teacher")
 
     # SAVE MODEL ON LEARNING
     '''
@@ -128,14 +121,14 @@ def train():
     predict_test = model.predict(x_test)
     fin_time = time.time()
 
-
-    #Validation(model, y_test, y_test_ans, y_test_embed, predict_test)
+    Validation(model, y_test, y_test_ans, y_test_embed, predict_test)
     
     print(predict_test)
     print("======")
     print(start_time)
     print(fin_time)
     print(fin_time - start_time)
+
     #necessary running time
     '''
         written by wooramkang 2018.09.06
@@ -147,14 +140,15 @@ def train():
     # DISTILLING NN from v-original
 
     weights_path = "/home/rd/recognition_reaserch/FACE/inception_v4+super_resolution+Face-align+denoisingAE+affineTransform/saved_models/hintlearn_model_trippletloss_final.h5"
-    model_hint = Distilling_neural_networks(input_shape, 128)
+    #model_hint = Distilling_neural_networks(input_shape, num_classes)
+
 
     try:
-        model = Weight_load(model_hint, weights_path)
+        model_hint = Weight_load(model_hint, weights_path)
     except:
-        print("there is no pretrained-weights")
+        print("there is no pretrained-weights_student")
 
-    '''
+
     save_dir = os.path.join(os.getcwd(), 'saved_models')
     model_name = 'hintlearn_model_trippletloss_final.h5'
     if not os.path.isdir(save_dir):
@@ -173,25 +167,28 @@ def train():
                                    verbose=1,
                                    min_lr=0.5e-6)
 
-    callbacks = [lr_reducer, early, checkpoint]
+    #callbacks = [lr_reducer, early, checkpoint]
+    callbacks = [lr_reducer, checkpoint]
     predict_test = model.predict(x_train)
+    predict_test_valid = model.predict(x_test)
+
     model_hint.fit(x_train, predict_test,
-                   validation_data=(x_train, predict_test),
-                   epochs=20,
+                   validation_data=(x_test, predict_test_valid),
+                   epochs=25,
                    batch_size=10,
                    callbacks=callbacks)
-    '''
+
     start_time = time.time()
     predict_test = model_hint.predict(x_test)
     fin_time = time.time()
 
     Validation(model, y_test, y_test_ans, y_test_embed, predict_test)
-    print("==================")
     print(predict_test)
-    print("======")
+    print("==================")
     print(start_time)
     print(fin_time)
     print(fin_time - start_time)
+
     '''
     written by wooramkang 2018.09.06
     distilling knowledge_Neural network
