@@ -9,7 +9,7 @@ def train():
     # params
     img_path = "/home/rd/recognition_reaserch/FACE/Dataset/lfw/"
     #img_path = "/home/rd/recognition_reaserch/FACE/Dataset/VGGFace2/raw/"
-    img_size = 96 #*96  # target size
+    img_size = 160 #*96  # target size
     num_classes = 128
 
     # DATA LOAD
@@ -28,8 +28,9 @@ def train():
     '''
 
     # MAKE LEARNING MODEL
-    model = Model_mixed(input_shape, num_classes)
+    #model = Model_mixed(input_shape, num_classes)
     model_hint = Distilling_neural_networks(input_shape, num_classes)
+    model = face_NN(input_shape, num_classes)
     '''
     written by wooramkang 2018.08.30
     numbers of params in networks
@@ -64,14 +65,15 @@ def train():
         1. full networks of inception-v4
         2. skipped networks of it
     '''
+    '''
     weights_path = "/home/rd/recognition_reaserch/FACE/inception_v4+super_resolution+Face-align+denoisingAE+affineTransform/saved_models/model.h5"
     try:
         model = Weight_load(model, weights_path)
     except:
         print("there is no pretrained-weights_teacher")
-
-    # SAVE MODEL ON LEARNING
     '''
+    # SAVE MODEL ON LEARNING
+    ''''''
     save_dir = os.path.join(os.getcwd(), 'saved_models')
     model_name = 'REALFACE_model_trippletloss_final.{epoch:03d}.h5'
     if not os.path.isdir(save_dir):
@@ -100,7 +102,7 @@ def train():
               batch_size=3,
               callbacks=callbacks)
     
-    '''
+    ''''''
 
     '''
     written by wooramkang 2018. 09.03

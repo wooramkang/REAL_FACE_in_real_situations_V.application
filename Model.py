@@ -22,7 +22,6 @@ from PIL import Image
 from keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, EarlyStopping
 
 '''
-
     written by wooramkang 2018.08.28
     i coded all the models
      and the bases of concepts are
@@ -193,7 +192,7 @@ def Autoencoder(inputs, input_shape):
     filter_norm = input_shape[1]
     print(input_shape)
 
-    layer_filters = [int(filter_norm * 3 / 2), int(filter_norm), int(filter_norm / 2)]
+    layer_filters = [int(filter_norm), int(2*filter_norm/3), int(filter_norm / 3)]
     channels = 3
     x = inputs
 
@@ -215,7 +214,6 @@ def Autoencoder(inputs, input_shape):
         x = BatchNormalization()(x)
         x = Activation('elu')(x)
 
-    x = Dropout(rate=0.2)(x)
     x = Conv2D(filters=channels,
                kernel_size=kernel_size,
                strides=1,
@@ -271,7 +269,6 @@ def Super_resolution(X, input_shape):
     out = Conv2D(3, (3,3), activation='relu', padding='same', name ='finaloutput')(avg_output)
      '''
     avg_output = Average()(output_layer)
-    avg_output = Dropout(rate=0.2)(avg_output)
     out = Conv2D(3, (2, 2), activation='sigmoid', padding='same', name='finaloutput_SUPresol')(avg_output)
 
     return out
@@ -459,6 +456,54 @@ def triplet_loss(y_true, y_pred, alpha=0.3):
     return loss
 
 
+def face_NN(input_shape, num_classes):
+    dropout_rate = 0.2
+    print(input_shape)
+    inputs = Input(input_shape, name='model_input')
+
+    X = inputs
+    X = Autoencoder(X, input_shape)
+    X = Super_resolution(X, input_shape)
+    X = conv2d_bn(X, 64, 7, 1, strides=(2, 2))
+    X = conv2d_bn(X, 64, 1, 7, strides=(2, 2))
+    X = MaxPooling2D()(X)
+    X = BatchNormalization()(X)
+    X = Activation('elu')(X)
+    X = inception_A(X)
+    X = MaxPooling2D()(X)
+    X = BatchNormalization()(X)
+    X = Activation('elu')(X)
+
+    X = inception_A(X)
+    #X = inception_A(X)
+    #   X = inception_A(X)
+    #    X = inception_A(X)
+    X = inception_reduction_A(X)
+
+    X = inception_B(X)
+    #X = inception_B(X)
+    #X = inception_B(X)
+    #X = inception_B(X)
+    #   X = inception_B(X)
+    #   X = inception_B(X)
+    #   X = inception_B(X)
+    X = inception_reduction_B(X)
+
+    X = inception_C(X)
+    #X = inception_C(X)
+    #    X = inception_C(X)
+
+    #X = AveragePooling2D(pool_size=(1, 1), padding='valid')(X)
+    X = Dropout(rate=dropout_rate)(X)
+    X = Flatten()(X)
+    X = Dense(num_classes, name='dense_layer')(X)
+    X = Lambda(lambda x: K.l2_normalize(x, axis=1))(X)
+
+    model = Model(inputs, X, name='hint_learn')
+    model.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
+    model.summary()
+
+    return model
 
 def Model_mixed(input_shape, num_classes):
     X_input = Input(input_shape, name='model_input')
@@ -507,6 +552,7 @@ def Model_mixed(input_shape, num_classes):
     inception_detail.compile(loss='mse', optimizer='adam')
     '''
     inception_detail = Inception_detail_for_face(stem_model, num_classes)
+
     # FINAL_MODELING
     model = Model(X_input,
                   inception_detail, name='Final_Model')
