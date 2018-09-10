@@ -78,7 +78,7 @@ def train():
     model_name = 'REALFACE_model_trippletloss_final.{epoch:03d}.h5'
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
-    filepath = os.path.join(save_dir, model_name)
+    filepath = os.path.join(save_dir, model_nam e)
     
     checkpoint = ModelCheckpoint(filepath=filepath,
                                  monitor='val_loss',
