@@ -223,7 +223,47 @@ def Autoencoder(inputs, input_shape):
                )(x)
     return x
 
+def dim_decrease(inputs, input_shape):
+    '''
+    written by wooramkang 2018.09.10
 
+    dim compression for learning
+    '''
+    kernel_size = 3
+    filter_norm = input_shape[1]
+    print(input_shape)
+
+    layer_filters = [int(filter_norm), int(filter_norm/3), 1]
+    channels = 3
+    x = inputs
+
+    for filters in layer_filters:
+        x = Conv2D(filters=filters,
+               kernel_size=kernel_size,
+               strides=1,
+               activation='relu',
+               padding='same')(x)
+        x = BatchNormalization()(x)
+        x = Activation('elu')(x)
+
+    for filters in layer_filters[::-1]:
+        x = Conv2D(filters=filters,
+               kernel_size=kernel_size,
+               strides=1,
+               activation='relu',
+               padding='same')(x)
+        x = BatchNormalization()(x)
+        x = Activation('elu')(x)
+
+    #x = Dropout(rate=0.2)(x)
+    x = Conv2D(filters=channels,
+                              kernel_size=kernel_size,
+                              strides=1,
+                              activation='sigmoid',
+                              padding='same',
+                              name='finaloutput_AE'
+                              )(x)
+    return x
 
 def Super_resolution(X, input_shape):
     x = X
