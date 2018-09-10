@@ -7,9 +7,10 @@ import time
 
 def train():
     # params
+    weights_path = "/home/rd/recognition_reaserch/FACE/inception_v4+super_resolution+Face-align+denoisingAE+affineTransform/saved_models/REALFACE_final_facenn.h5"
     img_path = "/home/rd/recognition_reaserch/FACE/Dataset/lfw/"
     #img_path = "/home/rd/recognition_reaserch/FACE/Dataset/VGGFace2/raw/"
-    img_size = 160 #*96  # target size
+    img_size = 96  # target size
     num_classes = 128
 
     # DATA LOAD
@@ -21,16 +22,22 @@ def train():
     y_train_ans, y_train_embed = split_embed_groundtruth(y_train)
     y_test_ans, y_test_embed = split_embed_groundtruth(y_test)
     '''
-    #DATA PREPROCESSING DEPENDING ON SITUATIONS
+    #DATA PREPROCESSING
     x_train, y_train, x_test, y_test = Affine_transform(x_train, y_train, x_test, y_test)
     x_train, x_test = Removing_light(x_train, x_test)
     x_train, x_test, input_shape = Make_embedding(x_train, x_test)
     '''
-
+    '''
+    written by wooram kang 2018.08.30
+    img size minimum => 155 * 155
+    '''
     # MAKE LEARNING MODEL
-    #model = Model_mixed(input_shape, num_classes)
-    model_hint = Distilling_neural_networks(input_shape, num_classes)
-    model = face_NN(input_shape, num_classes)
+    # input_shape = (3, 155, 155)
+
+    # model = Model_mixed(input_shape, num_classes)
+    model = simpler_face_NN(input_shape, num_classes)
+    model_hint = hint_learn(input_shape, num_classes)
+
     '''
     written by wooramkang 2018.08.30
     numbers of params in networks
@@ -55,31 +62,28 @@ def train():
     Total params: 44,261,874
     Trainable params: 44,202,082
     Non-trainable params: 59,792
-    _________________________________________________________
+    ___________________________________________
     3 96 96 / 128
-    Total params : 14,406,662_________________________________________
+
+    15,000,0000_______________________________________________________
     there is no pretrained-weights
-    
-    2018.09.04
-    conditions : 
-        1. full networks of inception-v4
-        2. skipped networks of it
+
     '''
-    '''
-    weights_path = "/home/rd/recognition_reaserch/FACE/inception_v4+super_resolution+Face-align+denoisingAE+affineTransform/saved_models/model.h5"
+
     try:
-        model = Weight_load(model, weights_path)
+        model.load_weights(weights_path)
     except:
-        print("there is no pretrained-weights_teacher")
-    '''
+        print("there is no pretained-model for teacher-net")
+
+    # model.load_weights(weights_path)
     # SAVE MODEL ON LEARNING
-    ''''''
     save_dir = os.path.join(os.getcwd(), 'saved_models')
-    model_name = 'REALFACE_model_trippletloss_final.{epoch:03d}.h5'
+
+    # model_name = 'REALFACE_model_trippletloss_final.{epoch:03d}.h5'
+    model_name = 'REALFACE_final_facenn.h5'
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
-    filepath = os.path.join(save_dir, model_nam e)
-    
+    filepath = os.path.join(save_dir, model_name)
     checkpoint = ModelCheckpoint(filepath=filepath,
                                  monitor='val_loss',
                                  verbose=1,
@@ -92,92 +96,64 @@ def train():
                                    min_lr=0.5e-6)
     early = EarlyStopping(monitor='val_loss', min_delta=0, patience=5, verbose=1, mode='auto')
 
-    #callbacks = [lr_reducer, early, checkpoint]
+    # callbacks = [lr_reducer, early, checkpoint]
     callbacks = [lr_reducer, checkpoint]
-    
-    #TRAIN
+
+    # TRAIN
+
     model.fit(x_train, y_train_embed,
               validation_data=(x_test, y_test_embed),
-              epochs=20,
-              batch_size=3,
+              epochs=30,
+              batch_size=15,
               callbacks=callbacks)
-    
-    ''''''
-
-    '''
-    written by wooramkang 2018. 09.03
-    be aware you need TiTan at least so far
-    
-    2018. 09. 05
-    now i try to
-    
-        1. pruning
-        2. KD networks
-        3. born-again networks
-        4. fitnet / hint net 
-    '''
 
     # TEST
-
     start_time = time.time()
     predict_test = model.predict(x_test)
     fin_time = time.time()
 
-    Validation(model, y_test, y_test_ans, y_test_embed, predict_test)
-    
     print(predict_test)
+
+    Validation(model, y_test, y_test_ans, y_test_embed, predict_test)
+
     print("======")
-    print(start_time)
-    print(fin_time)
     print(fin_time - start_time)
-
-    #necessary running time
-    '''
-        written by wooramkang 2018.09.06
-        
-        kind of hint-net
-        number of params get 1/3 times less than v-original as least 
-    '''
-
-    # DISTILLING NN from v-original
 
     weights_path = "/home/rd/recognition_reaserch/FACE/inception_v4+super_resolution+Face-align+denoisingAE+affineTransform/saved_models/hintlearn_model_trippletloss_final.h5"
     #model_hint = Distilling_neural_networks(input_shape, num_classes)
-
-
+    '''
     try:
         model_hint = Weight_load(model_hint, weights_path)
     except:
-        print("there is no pretrained-weights_student")
-
+        print("there is no pretrained-weights")
+    '''
 
     save_dir = os.path.join(os.getcwd(), 'saved_models')
     model_name = 'hintlearn_model_trippletloss_final.h5'
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
-
     filepath = os.path.join(save_dir, model_name)
 
     checkpoint = ModelCheckpoint(filepath=filepath,
                                  monitor='val_loss',
                                  verbose=1,
                                  save_best_only=True)
-    early = EarlyStopping(monitor='val_loss', min_delta=0, patience=5, verbose=1, mode='auto')
+    # OPTIONAL
     lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1),
                                    cooldown=0,
                                    patience=5,
                                    verbose=1,
                                    min_lr=0.5e-6)
-
-    #callbacks = [lr_reducer, early, checkpoint]
+    # early = EarlyStopping(monitor='val_loss', min_delta=0, patience=5, verbose=1, mode='auto')
     callbacks = [lr_reducer, checkpoint]
+
+    predict_test_valid = predict_test
     predict_test = model.predict(x_train)
-    predict_test_valid = model.predict(x_test)
 
     model_hint.fit(x_train, predict_test,
                    validation_data=(x_test, predict_test_valid),
                    epochs=25,
-                   batch_size=10,
+                   batch_size=20,
                    callbacks=callbacks)
 
     start_time = time.time()
@@ -185,17 +161,13 @@ def train():
     fin_time = time.time()
 
     Validation(model, y_test, y_test_ans, y_test_embed, predict_test)
-    print(predict_test)
     print("==================")
+    print(predict_test)
+    print("======")
     print(start_time)
     print(fin_time)
     print(fin_time - start_time)
 
-    '''
-    written by wooramkang 2018.09.06
-    distilling knowledge_Neural network
-    
-     the running time of v-original = 60 times of the running time of distilling NN 
-    '''
+
 if __name__ == "__main__":
     train()
