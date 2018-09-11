@@ -29,7 +29,7 @@ def Img_load(image_path, img_szie ):
             #identity = str(identity).split('_')[0]
             #y_data.append(identity)
             y_data.append(name)
-            if count == 10 :
+            if count == 4:
                 break
 
     print(len(x_data))

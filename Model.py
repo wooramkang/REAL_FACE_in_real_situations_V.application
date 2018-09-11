@@ -11,7 +11,7 @@ import cv2
 import tensorflow as tf
 from keras import backend as K
 from keras.layers import Conv2D, ZeroPadding2D, Activation, Input, concatenate, Reshape, Conv2DTranspose, Dropout
-from keras.layers import Average, Convolution2D
+from keras.layers import Average, Convolution2D, Concatenate
 from keras.models import Model
 from keras.layers.normalization import BatchNormalization
 from keras.layers.pooling import MaxPooling2D, AveragePooling2D
@@ -266,6 +266,80 @@ def dim_decrease(inputs, input_shape):
                         name='finaloutput_AE'
                         )(x)
     return x
+'''
+    written by wooramkang 2018.09.11
+    residual-net version of my Autoencoder for preprocessing
+'''
+def dim_decrease_residualnet(inputs, input_shape):
+    '''
+    written by wooramkang 2018.08.29
+
+    this simple AE came from my AutoEncoder git
+
+    and
+    it's on modifying
+    '''
+    kernel_size = 3
+    filter_norm = input_shape[1]
+    print(input_shape)
+    if K.image_data_format() == 'channels_first':
+        channel_axis = 1
+    else:
+        channel_axis = -1
+
+    layer_filters = [int(filter_norm/3), int(filter_norm/6), 1]
+    channels = 3
+    x = inputs
+    x_raw = x
+
+    x1 = []
+    x = Conv2DTranspose(int(filter_norm/2), kernel_size, strides=1,activation='relu',padding='same')(x)
+
+    for filters in layer_filters:
+        x = Concatenate(axis=channel_axis)([x,x_raw])
+        x = Conv2D(filters=filters,
+               kernel_size=kernel_size,
+               strides=1,
+               activation='relu',
+               padding='same')(x)
+        x1.append(x)
+        x = BatchNormalization()(x)
+        x = Activation('elu')(x)
+
+    count=2
+    x2 = []
+
+    for filters in layer_filters[::-1]:
+        x = Concatenate(axis=channel_axis)([x, x1[count]])
+        x = Conv2DTranspose(filters=filters,
+               kernel_size=kernel_size,
+               strides=1,
+               activation='relu',
+               padding='same')(x)
+        x2.append(x)
+        x = BatchNormalization()(x)
+        x = Activation('elu')(x)
+        count= count- 1
+
+    del x1
+
+    count = 2
+
+    layer_filters = [int(filter_norm/3), int(filter_norm/6), 3]
+    for filters in layer_filters:
+        x = Concatenate(axis=channel_axis)([x, x2[count], x_raw])
+        x = Conv2D(filters=filters,
+               kernel_size=kernel_size,
+               strides=1,
+               activation='sigmoid',
+               padding='same')(x)
+        x = BatchNormalization()(x)
+        x = Activation('elu')(x)
+        count= count- 1
+
+    del x2
+
+    return x
 
 
 def Super_resolution(X, input_shape):
@@ -317,6 +391,14 @@ def Super_resolution(X, input_shape):
 
     return out
 
+def triplet_loss(y_true, y_pred, alpha=0.3):
+    anchor, positive, negative = y_pred[0], y_pred[1], y_pred[2]
+    pos_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, positive)), axis=-1)
+    neg_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, negative)), axis=-1)
+    basic_loss = tf.add(tf.subtract(pos_dist, neg_dist), alpha)
+    loss = tf.reduce_sum(tf.maximum(basic_loss, 0.0))
+
+    return loss
 
 def Stem_model(X):
     # input 299*299*3
@@ -415,116 +497,6 @@ def Inception_detail_for_face(X, classes):
     X = Lambda(lambda x: K.l2_normalize(x, axis=1))(X)
     return X
 
-
-def triplet_loss(y_true, y_pred, alpha=0.3):
-    anchor, positive, negative = y_pred[0], y_pred[1], y_pred[2]
-    pos_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, positive)), axis=-1)
-    neg_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, negative)), axis=-1)
-    basic_loss = tf.add(tf.subtract(pos_dist, neg_dist), alpha)
-    loss = tf.reduce_sum(tf.maximum(basic_loss, 0.0))
-
-    return loss
-
-
-def hint_learn(input_shape, num_classes):
-    '''
-    for student-net, following papers
-    students NNs without dropout have better performance than students NNS with dropout
-
-    '''
-    print(input_shape)
-    inputs = Input(input_shape, name='model_input')
-
-    x = inputs
-    x = dim_decrease(x, input_shape)
-    '''
-    written by wooramkang 2018.09.07
-    step_size should be 
-
-    #96  8
-    #160 16
-    #plus 8 per 64
-    '''
-
-    step_size = int(((input_shape[1] - 96) / 64) * 8 + 8)
-
-    X = Conv2D(1, step_size, strides=2, activation='relu')(x)
-    X = BatchNormalization()(X)
-    X = Activation('elu')(X)
-    X = Conv2D(step_size, 1, strides=2, activation='relu')(X)
-    X = BatchNormalization()(X)
-    X = Activation('elu')(X)
-    X = Conv2D(1, step_size, strides=1, activation='relu')(X)
-    X = BatchNormalization()(X)
-    X = Activation('elu')(X)
-    '''
-    written by wooramkang 2018.09.07
-
-        the size of shape at this moment would be bigger than original-v or same with that
-
-    '''
-    X = Flatten()(X)
-    X = Dense(num_classes * 10)(X)
-    X = Dense(num_classes)(X)
-
-    model = Model(inputs, X, name='hint_learn')
-    model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
-    model.summary()
-
-    return model
-
-
-def simpler_face_NN(input_shape, num_classes):
-
-    dropout_rate = 0.5
-    print(input_shape)
-    inputs = Input(input_shape, name='model_input')
-
-    X = inputs
-    X = dim_decrease(X, input_shape)
-    X = Super_resolution(X, input_shape)
-    X = conv2d_bn(X, 64, 7, 1, strides=(2, 2))
-    X = conv2d_bn(X, 64, 1, 7, strides=(2, 2))
-    X = MaxPooling2D()(X)
-    X = BatchNormalization()(X)
-    X = Activation('elu')(X)
-    X = inception_A(X)
-    X = MaxPooling2D()(X)
-    X = BatchNormalization()(X)
-    X = Activation('elu')(X)
-
-    X = inception_A(X)
-    # X = inception_A(X)
-    #   X = inception_A(X)
-    #    X = inception_A(X)
-    X = inception_reduction_A(X)
-
-    X = inception_B(X)
-    # X = inception_B(X)
-    # X = inception_B(X)
-    X = inception_B(X)
-    #   X = inception_B(X)
-    #   X = inception_B(X)
-    #   X = inception_B(X)
-    #X = inception_reduction_B(X)
-
-    X = inception_C(X)
-    #   X = inception_C(X)
-    #   X = inception_C(X)
-
-    X = AveragePooling2D(pool_size=(2, 2), padding='valid')(X)
-    X = Flatten()(X)
-    X = Dropout(rate=dropout_rate)(X)
-    X = Dense(num_classes, name='dense_layer')(X)
-    X = Lambda(lambda x: K.l2_normalize(x, axis=1))(X)
-
-    model = Model(inputs, X, name='hint_learn')
-    model.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
-    model.summary()
-
-    return model
-
-
 def Model_mixed(input_shape, num_classes):
     X_input = Input(input_shape, name='model_input')
 
@@ -578,3 +550,164 @@ def Model_mixed(input_shape, num_classes):
     model.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
     model.summary()
     return model
+
+
+def simpler_face_NN(input_shape, num_classes):
+
+    dropout_rate = 0.4
+    print(input_shape)
+    inputs = Input(input_shape, name='model_input')
+
+    X = inputs
+    X = dim_decrease(X, input_shape)
+    X = Super_resolution(X, input_shape)
+    X = conv2d_bn(X, 64, 7, 1, strides=(2, 2))
+    X = conv2d_bn(X, 64, 1, 7, strides=(2, 2))
+    X = MaxPooling2D()(X)
+    X = BatchNormalization()(X)
+    X = Activation('elu')(X)
+    X = inception_A(X)
+    X = MaxPooling2D()(X)
+    X = BatchNormalization()(X)
+    X = Activation('elu')(X)
+
+    X = inception_A(X)
+    # X = inception_A(X)
+    #   X = inception_A(X)
+    #    X = inception_A(X)
+    X = inception_reduction_A(X)
+
+    X = inception_B(X)
+    # X = inception_B(X)
+    # X = inception_B(X)
+    X = inception_B(X)
+    #   X = inception_B(X)
+    #   X = inception_B(X)
+    #   X = inception_B(X)
+    #X = inception_reduction_B(X)
+
+    X = inception_C(X)
+    #   X = inception_C(X)
+    #   X = inception_C(X)
+
+    X = AveragePooling2D(pool_size=(2, 2), padding='valid')(X)
+    X = Flatten()(X)
+    X = Dropout(rate=dropout_rate)(X)
+    X = Dense(num_classes, name='dense_layer')(X)
+    X = Lambda(lambda x: K.l2_normalize(x, axis=1))(X)
+
+    model = Model(inputs, X, name='hint_learn')
+    model.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
+    model.summary()
+
+    return model
+'''
+    written by wooramkang 2018.09.11
+    
+    residual-net version of my face recognition network 
+
+'''
+def simpler_face_NN_residualnet(input_shape, num_classes):
+    dropout_rate = 0.5
+    print(input_shape)
+    inputs = Input(input_shape, name='model_input')
+    if K.image_data_format() == 'channels_first':
+        channel_axis = 1
+    else:
+        channel_axis = -1
+    X = inputs
+    X = dim_decrease_residualnet(X, input_shape)
+
+    #X = Super_resolution(X, input_shape)
+    X = conv2d_bn(X, 128, 7, 1, strides=(2, 1))
+    X = conv2d_bn(X, 128, 1, 7, strides=(1, 2))
+    X = MaxPooling2D()(X)
+    X = BatchNormalization(axis=channel_axis)(X)
+    X = Activation('elu')(X)
+
+    X1 = inception_A(X)
+    X = Concatenate(axis=channel_axis)([X1, X])
+    X = MaxPooling2D()(X)
+    X = BatchNormalization(axis=channel_axis)(X)
+    X = Activation('elu')(X)
+    X2 = inception_A(X)
+    X = Concatenate(axis=channel_axis)([X2, X])
+    X = BatchNormalization(axis=channel_axis)(X)
+    X = Activation('elu')(X)
+    X = inception_reduction_A(X)
+
+    X3 = inception_B(X)
+    X = Concatenate(axis=channel_axis)([X3, X])
+    X = BatchNormalization(axis=channel_axis)(X)
+    X = Activation('elu')(X)
+    X = inception_reduction_B(X)
+    X = BatchNormalization(axis=channel_axis)(X)
+    X = Activation('elu')(X)
+
+    #X = Concatenate(axis=channel_axis)([X2, X])
+    X = inception_C(X)
+    #   X = inception_C(X)
+    #   X = inception_C(X)
+
+    X = AveragePooling2D(pool_size=(3, 3), padding='valid')(X)
+    X = Flatten()(X)
+    X = Dropout(rate=dropout_rate)(X)
+    X = Dense(num_classes, name='dense_layer')(X)
+    X = Lambda(lambda x: K.l2_normalize(x, axis=1))(X)
+
+    model = Model(inputs, X, name='hint_learn')
+    model.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
+    model.summary()
+
+    return model
+
+def hint_learn(input_shape, num_classes):
+    '''
+    written by wooramkang 2018.09.10
+
+    for student-net, following papers
+    students NNs without dropout have better performance than students NNS with dropout
+
+    '''
+    print(input_shape)
+    inputs = Input(input_shape, name='model_input')
+
+    x = inputs
+    x = dim_decrease(x, input_shape)
+    '''
+    written by wooramkang 2018.09.07
+    step_size should be 
+
+    #96  8
+    #160 16
+    #plus 8 per 64
+    '''
+
+    step_size = int(((input_shape[1] - 96) / 64) * 8 + 8)
+
+    X = Conv2D(1, step_size, strides=2, activation='relu')(x)
+    X = BatchNormalization()(X)
+    X = Activation('elu')(X)
+    X = Conv2D(step_size, 1, strides=2, activation='relu')(X)
+    X = BatchNormalization()(X)
+    X = Activation('elu')(X)
+    X = Conv2D(1, step_size, strides=1, activation='relu')(X)
+    X = BatchNormalization()(X)
+    X = Activation('elu')(X)
+    '''
+    written by wooramkang 2018.09.07
+
+        the size of shape at this moment would be bigger than original-v or same with that
+
+    '''
+    X = Flatten()(X)
+    X = Dense(num_classes * 10)(X)
+    X = Dense(num_classes)(X)
+
+    model = Model(inputs, X, name='hint_learn')
+    model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
+    model.summary()
+
+    return model
+
+

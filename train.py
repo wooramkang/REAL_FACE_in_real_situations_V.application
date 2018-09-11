@@ -8,10 +8,11 @@ import time
 def train():
     # params
     weights_path = "/home/rd/recognition_reaserch/FACE/inception_v4+super_resolution+Face-align+denoisingAE+affineTransform/saved_models/REALFACE_final_facenn.h5"
-    img_path = "/home/rd/recognition_reaserch/FACE/Dataset/lfw/"
+    #img_path = "/home/rd/recognition_reaserch/FACE/Dataset/lfw/"
     #img_path = "/home/rd/recognition_reaserch/FACE/Dataset/VGGFace2/raw/"
-    img_size = 96  # target size
-    num_classes = 128
+    img_path = "/home/rd/recognition_reaserch/FACE/Dataset/integration/"
+    img_size = 128  # target size
+    num_classes = 64
 
     # DATA LOAD
     x_data, y_data = Img_load(img_path, img_size)
@@ -35,7 +36,7 @@ def train():
     # input_shape = (3, 155, 155)
 
     # model = Model_mixed(input_shape, num_classes)
-    model = simpler_face_NN(input_shape, num_classes)
+    model = simpler_face_NN_residualnet(input_shape, num_classes)
     model_hint = hint_learn(input_shape, num_classes)
 
     '''
@@ -69,12 +70,12 @@ def train():
     there is no pretrained-weights
 
     '''
-
+    '''
     try:
         model.load_weights(weights_path)
     except:
         print("there is no pretained-model for teacher-net")
-
+    '''
     # model.load_weights(weights_path)
     # SAVE MODEL ON LEARNING
     save_dir = os.path.join(os.getcwd(), 'saved_models')
@@ -104,7 +105,7 @@ def train():
     model.fit(x_train, y_train_embed,
               validation_data=(x_test, y_test_embed),
               epochs=30,
-              batch_size=15,
+              batch_size=5,
               callbacks=callbacks)
 
     # TEST
