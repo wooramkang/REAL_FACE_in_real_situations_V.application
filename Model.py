@@ -59,10 +59,10 @@ def conv2d_bn(X, nb_filter, num_row, num_col, padding='same', strides=(1, 1), us
                       strides=strides,
                       padding=padding,
                       use_bias=use_bias,
-                      kernel_regularizer=regularizers.l2(0.00004),
+                      kernel_regularizer=regularizers.l2(0.000004),
                       kernel_initializer=initializers.VarianceScaling(scale=2.0, mode='fan_in',
                                                                       distribution='normal', seed=None))(X)
-    X = BatchNormalization(axis=channel_axis, momentum=0.9997, scale=False)(X)
+    X = BatchNormalization(axis=channel_axis, momentum=0.999997, scale=False)(X)
     X = Activation('relu')(X)
     return X
 
@@ -605,7 +605,9 @@ def simpler_face_NN(input_shape, num_classes):
     written by wooramkang 2018.09.11
     
     residual-net version of my face recognition network 
-
+    it looks like a wing?
+    
+    wing-net?
 '''
 def simpler_face_NN_residualnet(input_shape, num_classes):
     dropout_rate = 0.5
@@ -617,39 +619,38 @@ def simpler_face_NN_residualnet(input_shape, num_classes):
         channel_axis = -1
     X = inputs
     X = dim_decrease_residualnet(X, input_shape)
-
     #X = Super_resolution(X, input_shape)
     X = conv2d_bn(X, 128, 7, 1, strides=(2, 1))
     X = conv2d_bn(X, 128, 1, 7, strides=(1, 2))
     X = MaxPooling2D()(X)
     X = BatchNormalization(axis=channel_axis)(X)
-    X = Activation('elu')(X)
+    X = Activation('relu')(X)
 
-    X1 = inception_A(X)
-    X = Concatenate(axis=channel_axis)([X1, X])
+    first = X
+    X = inception_A(X)
+    X = Concatenate(axis=channel_axis)([first, X])
     X = MaxPooling2D()(X)
     X = BatchNormalization(axis=channel_axis)(X)
-    X = Activation('elu')(X)
-    X2 = inception_A(X)
-    X = Concatenate(axis=channel_axis)([X2, X])
+    X = Activation('relu')(X)
+    X = inception_A(X)
+    X = Concatenate(axis=channel_axis)([MaxPooling2D()(first), X])
     X = BatchNormalization(axis=channel_axis)(X)
-    X = Activation('elu')(X)
+    X = Activation('relu')(X)
     X = inception_reduction_A(X)
 
-    X3 = inception_B(X)
-    X = Concatenate(axis=channel_axis)([X3, X])
+    second = X
+    X = inception_B(X)
+    X = Concatenate(axis=channel_axis)([second, X])
     X = BatchNormalization(axis=channel_axis)(X)
-    X = Activation('elu')(X)
+    X = Activation('relu')(X)
     X = inception_reduction_B(X)
     X = BatchNormalization(axis=channel_axis)(X)
-    X = Activation('elu')(X)
+    X = Activation('relu')(X)
 
-    #X = Concatenate(axis=channel_axis)([X2, X])
+    third = 0
     X = inception_C(X)
-    #   X = inception_C(X)
-    #   X = inception_C(X)
 
-    X = AveragePooling2D(pool_size=(3, 3), padding='valid')(X)
+    X = AveragePooling2D(pool_size=(4, 4), padding='valid')(X)
     X = Flatten()(X)
     X = Dropout(rate=dropout_rate)(X)
     X = Dense(num_classes, name='dense_layer')(X)

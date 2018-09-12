@@ -11,7 +11,7 @@ def train():
     #img_path = "/home/rd/recognition_reaserch/FACE/Dataset/lfw/"
     #img_path = "/home/rd/recognition_reaserch/FACE/Dataset/VGGFace2/raw/"
     img_path = "/home/rd/recognition_reaserch/FACE/Dataset/integration/"
-    img_size = 128  # target size
+    img_size = 160  # target size
     num_classes = 64
 
     # DATA LOAD
