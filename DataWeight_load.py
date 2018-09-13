@@ -14,14 +14,28 @@ from keras.models import Model
 def Img_load(image_path, img_szie ):
     x_data = []
     y_data = []
+    face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
     # glob.glob("images/*"):
     folders = os.listdir(image_path)
     for name in folders:
         count = 0
         for file in glob.glob(image_path+name+"/*"):
+
             count = count + 1
             img_ = cv2.imread(file)
+
+            gray = cv2.cvtColor(img_, cv2.COLOR_BGR2GRAY)
+            faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+            for (x, y, w, h) in faces:
+                sub_img = img_[y:y+h, x:x+w]
+                sub_img = cv2.resize(sub_img, (img_szie, img_szie))
+                sub_img = np.transpose(sub_img, (2, 0, 1))
+                x_data.append(sub_img)
+                y_data.append(name)
+
+            del img_
+            '''
             img_ = cv2.resize(img_, (img_szie, img_szie))
             img_ = np.transpose(img_, (2, 0, 1))
             x_data.append(img_)
@@ -29,6 +43,8 @@ def Img_load(image_path, img_szie ):
             #identity = str(identity).split('_')[0]
             #y_data.append(identity)
             y_data.append(name)
+            '''
+
             if count == 4:
                 break
 

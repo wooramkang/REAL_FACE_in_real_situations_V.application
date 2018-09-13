@@ -8,10 +8,10 @@ import time
 def train():
     # params
     weights_path = "/home/rd/recognition_reaserch/FACE/inception_v4+super_resolution+Face-align+denoisingAE+affineTransform/saved_models/REALFACE_final_facenn.h5"
-    #img_path = "/home/rd/recognition_reaserch/FACE/Dataset/lfw/"
+    img_path = "/home/rd/recognition_reaserch/FACE/Dataset/lfw/"
     #img_path = "/home/rd/recognition_reaserch/FACE/Dataset/VGGFace2/raw/"
-    img_path = "/home/rd/recognition_reaserch/FACE/Dataset/integration/"
-    img_size = 160  # target size
+    #img_path = "/home/rd/recognition_reaserch/FACE/Dataset/integration/"
+    img_size = 96  # target size
     num_classes = 64
 
     # DATA LOAD

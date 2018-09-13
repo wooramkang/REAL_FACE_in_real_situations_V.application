@@ -270,6 +270,8 @@ def dim_decrease(inputs, input_shape):
     written by wooramkang 2018.09.11
     residual-net version of my Autoencoder for preprocessing
 '''
+
+
 def dim_decrease_residualnet(inputs, input_shape):
     '''
     written by wooramkang 2018.08.29
@@ -279,6 +281,7 @@ def dim_decrease_residualnet(inputs, input_shape):
     and
     it's on modifying
     '''
+    ''''''
     kernel_size = 3
     filter_norm = input_shape[1]
     print(input_shape)
@@ -286,59 +289,76 @@ def dim_decrease_residualnet(inputs, input_shape):
         channel_axis = 1
     else:
         channel_axis = -1
-
-    layer_filters = [int(filter_norm/3), int(filter_norm/6), 1]
     channels = 3
     x = inputs
-    x_raw = x
 
     x1 = []
-    x = Conv2DTranspose(int(filter_norm/2), kernel_size, strides=1,activation='relu',padding='same')(x)
+    layer_filters = [int(filter_norm / 4), int(filter_norm / 2), int(filter_norm)]
+
+    x = Conv2DTranspose(int(filter_norm / 2), kernel_size, strides=1, activation='relu', padding='same')(x)
 
     for filters in layer_filters:
-        x = Concatenate(axis=channel_axis)([x,x_raw])
+        x_raw = AveragePooling2D()(x)
         x = Conv2D(filters=filters,
-               kernel_size=kernel_size,
-               strides=1,
-               activation='relu',
-               padding='same')(x)
+                   kernel_size=kernel_size,
+                   strides=2,
+                   activation='relu',
+                   padding='same')(x)
         x1.append(x)
+        x = Concatenate(axis=channel_axis)([x, x_raw])
         x = BatchNormalization()(x)
-        x = Activation('elu')(x)
+        x = Activation('relu')(x)
 
-    count=2
-    x2 = []
-
+    count = 2
     for filters in layer_filters[::-1]:
         x = Concatenate(axis=channel_axis)([x, x1[count]])
         x = Conv2DTranspose(filters=filters,
-               kernel_size=kernel_size,
-               strides=1,
-               activation='relu',
-               padding='same')(x)
-        x2.append(x)
+                            kernel_size=kernel_size,
+                            strides=2,
+                            activation='relu',
+                            padding='same')(x)
         x = BatchNormalization()(x)
-        x = Activation('elu')(x)
-        count= count- 1
+        x = Activation('relu')(x)
+        count = count - 1
 
     del x1
 
-    count = 2
+    '''
+    written by wooramkang  2018.09.12
+    Max         Avg pool => ?
 
-    layer_filters = [int(filter_norm/3), int(filter_norm/6), 3]
+    Densenet    Resnet => ?
+    '''
+    layer_filters = [int(filter_norm), int(filter_norm / 2), int(filter_norm / 4)]
+    x_t = x
+    #    x = Dropout(dropout_rate)(x)
+    x = Concatenate(axis=channel_axis)([x, inputs])
+
     for filters in layer_filters:
-        x = Concatenate(axis=channel_axis)([x, x2[count], x_raw])
+        x_t = Conv2D(filters=filters,
+                     kernel_size=(3, 1),
+                     strides=1,
+                     activation='relu',
+                     padding='same')(x)
+        x_t = BatchNormalization()(x_t)
+        x_t = Activation('relu')(x_t)
+
         x = Conv2D(filters=filters,
-               kernel_size=kernel_size,
-               strides=1,
-               activation='sigmoid',
-               padding='same')(x)
+                   kernel_size=(1, 3),
+                   strides=1,
+                   activation='relu',
+                   padding='same')(x_t)
         x = BatchNormalization()(x)
-        x = Activation('elu')(x)
-        count= count- 1
+        x = Activation('relu')(x)
+        x = Concatenate(axis=channel_axis)([x, inputs])
 
-    del x2
-
+    x = Conv2D(filters=3,
+               kernel_size=(3, 3),
+               strides=1,
+               activation='relu',
+               padding='same')(x)
+    x = BatchNormalization()(x)
+    x = Activation('relu')(x)
     return x
 
 
@@ -650,7 +670,7 @@ def simpler_face_NN_residualnet(input_shape, num_classes):
     third = 0
     X = inception_C(X)
 
-    X = AveragePooling2D(pool_size=(4, 4), padding='valid')(X)
+    X = AveragePooling2D(pool_size=(2, 2), padding='valid')(X)
     X = Flatten()(X)
     X = Dropout(rate=dropout_rate)(X)
     X = Dense(num_classes, name='dense_layer')(X)
