@@ -7,24 +7,67 @@ import glob
 import numpy as np
 from numpy import genfromtxt
 import cv2
+import PIL
 import keras
 from keras.models import Model
 
-
+'''
 def Img_load(image_path, img_szie ):
     x_data = []
     y_data = []
-    face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
+    # glob.glob("images/*"):
+    folders = os.listdir(image_path)
+    for name in folders:
+        count=0
+        #print(name)
+        for file in glob.glob(image_path+name+"/*"):
+            count= count+1
+            identity = str(file).split('.')
+            if identity[len(identity)-1] != 'jpg':
+                break
+            img_ = cv2.imread(file)
+            img_ = cv2.resize(img_, (img_szie, img_szie))
+            #print(img_.shape)
+            img_ = np.transpose(img_, (2, 0, 1))
+            x_data.append(img_)
+
+            #y_data.append(identity)
+            y_data.append(name)
+            if count == 20:
+                break
+
+    print(len(x_data))
+    print(len(y_data))
+    print(len(folders))
+    print("==============")
+
+    return np.array(x_data), np.array(y_data)
+'''
+def Img_load(image_path, img_szie ):
+    x_data = []
+    y_data = []
+    face_cascade = cv2.CascadeClassifier('haar.xml')
     # glob.glob("images/*"):
     folders = os.listdir(image_path)
     for name in folders:
         count = 0
         for file in glob.glob(image_path+name+"/*"):
+            identity = str(file).split('.')
 
-            count = count + 1
-            img_ = cv2.imread(file)
+            if identity[len(identity)-1] != 'jpg':
+                continue
 
+            with open(file, 'rb') as f:
+                check_chars = f.read()[-2:]
+                if check_chars != b'\xff\xd9':
+                    print(file)
+                    print('Not complete image')
+                    continue
+                else:
+                    img_ = cv2.imread(file)
+
+            count =count + 1
             gray = cv2.cvtColor(img_, cv2.COLOR_BGR2GRAY)
             faces = face_cascade.detectMultiScale(gray, 1.3, 5)
             for (x, y, w, h) in faces:
@@ -33,8 +76,6 @@ def Img_load(image_path, img_szie ):
                 sub_img = np.transpose(sub_img, (2, 0, 1))
                 x_data.append(sub_img)
                 y_data.append(name)
-
-            del img_
             '''
             img_ = cv2.resize(img_, (img_szie, img_szie))
             img_ = np.transpose(img_, (2, 0, 1))
@@ -44,8 +85,9 @@ def Img_load(image_path, img_szie ):
             #y_data.append(identity)
             y_data.append(name)
             '''
+            del img_
 
-            if count == 4:
+            if count == 15:
                 break
 
     print(len(x_data))
@@ -54,7 +96,6 @@ def Img_load(image_path, img_szie ):
     print("==============")
 
     return np.array(x_data), np.array(y_data)
-
 
 def split_embed_groundtruth(raw_data):
     ans_set = []
