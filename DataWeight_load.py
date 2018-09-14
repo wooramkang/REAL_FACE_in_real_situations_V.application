@@ -47,7 +47,7 @@ def Img_load(image_path, img_szie ):
 def Img_load(image_path, img_szie ):
     x_data = []
     y_data = []
-    face_cascade = cv2.CascadeClassifier('haar.xml')
+    face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
     # glob.glob("images/*"):
     folders = os.listdir(image_path)
     for name in folders:

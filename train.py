@@ -76,7 +76,7 @@ def train():
     except:
         print("there is no pretained-model for teacher-net")
     '''
-    model.load_weights(weights_path)
+    #model.load_weights(weights_path)
     # SAVE MODEL ON LEARNING
     save_dir = os.path.join(os.getcwd(), 'saved_models')
 
@@ -101,13 +101,13 @@ def train():
     callbacks = [lr_reducer, checkpoint]
 
     # TRAIN
-    '''
+
     model.fit(x_train, y_train_embed,
               validation_data=(x_test, y_test_embed),
               epochs=15,
               batch_size=5,
               callbacks=callbacks)
-    '''
+
     # TEST
     start_time = time.time()
     predict_test = model.predict(x_test)
