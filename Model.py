@@ -749,8 +749,9 @@ def another_trial_model(input_shape, num_classes):
         channel_axis = -1
 
     X = inputs
+
     #X = dim_decrease(X, input_shape)
-    #X = Super_resolution(X, input_shape)
+
     X = ZeroPadding2D((3,3))(X)
     X = conv2d_bn(X, int(num_classes/2), 7, 1, strides=(2, 1))
     X = conv2d_bn(X, int(num_classes/2), 1, 7, strides=(1, 2))
@@ -762,27 +763,21 @@ def another_trial_model(input_shape, num_classes):
     X = MaxPooling2D((2, 2))(X)
     X = conv2d_bn(X, num_classes, 1, 1, strides=(1, 1))
 
-    #first = X
+
     X = inception_A(X)
-    #X = Concatenate(axis=channel_axis)([first, X])
     X = MaxPooling2D()(X)
     X = BatchNormalization(axis=channel_axis)(X)
     X = Activation('elu')(X)
     X = inception_A(X)
-    #X = Concatenate(axis=channel_axis)([MaxPooling2D()(first), X])
     X = BatchNormalization(axis=channel_axis)(X)
     X = Activation('elu')(X)
     X = inception_reduction_A(X)
 
-    #second = X
+
     X = inception_B(X)
-    #X = Concatenate(axis=channel_axis)([second, X])
     X = BatchNormalization(axis=channel_axis)(X)
     X = Activation('elu')(X)
     X = inception_reduction_B(X)
-
-    third = 0
-    #X = inception_C(X)
 
     X = AveragePooling2D(pool_size=(2, 2), padding='valid')(X)
     X = Flatten()(X)
