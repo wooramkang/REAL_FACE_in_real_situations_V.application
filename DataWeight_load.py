@@ -91,7 +91,7 @@ def Img_load(image_path, img_szie ):
             '''
             del img_
 
-            if count == 15:
+            if count == 3:
                 break
 
     print(len(x_data))

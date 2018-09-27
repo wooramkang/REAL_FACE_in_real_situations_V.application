@@ -357,7 +357,7 @@ def FACE(input_shape):
     X = AveragePooling2D(pool_size=(3, 3), strides=(1, 1), data_format='channels_first')(X)
     X = Flatten()(X)
     X = Dropout(dropout_rate)(X)
-    X = Dense(128, name='dense_layer')(X)
+    X = Dense(196, name='dense_layer')(X)
 
     # L2 normalization
     X = Lambda(lambda x: K.l2_normalize(x, axis=1))(X)
