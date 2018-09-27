@@ -732,3 +732,66 @@ def hint_learn(input_shape, num_classes):
     return model
 
 
+def another_trial_model(input_shape, num_classes):
+    '''
+
+    IMG_SIZE 196*196
+    NUMCLASS 128-256
+    '''
+    dropout_rate = 0.4
+    print(input_shape)
+
+    inputs = Input(input_shape, name='model_input')
+
+    if K.image_data_format() == 'channels_first':
+        channel_axis = 1
+    else:
+        channel_axis = -1
+
+    X = inputs
+    #X = dim_decrease(X, input_shape)
+    #X = Super_resolution(X, input_shape)
+    X = ZeroPadding2D((3,3))(X)
+    X = conv2d_bn(X, int(num_classes/2), 7, 1, strides=(2, 1))
+    X = conv2d_bn(X, int(num_classes/2), 1, 7, strides=(1, 2))
+    X = MaxPooling2D()(X)
+    X = BatchNormalization(axis=channel_axis)(X)
+    X = Activation('elu')(X)
+
+    X = ZeroPadding2D((1, 1))(X)
+    X = MaxPooling2D((2, 2))(X)
+    X = conv2d_bn(X, num_classes, 1, 1, strides=(1, 1))
+
+    #first = X
+    X = inception_A(X)
+    #X = Concatenate(axis=channel_axis)([first, X])
+    X = MaxPooling2D()(X)
+    X = BatchNormalization(axis=channel_axis)(X)
+    X = Activation('elu')(X)
+    X = inception_A(X)
+    #X = Concatenate(axis=channel_axis)([MaxPooling2D()(first), X])
+    X = BatchNormalization(axis=channel_axis)(X)
+    X = Activation('elu')(X)
+    X = inception_reduction_A(X)
+
+    #second = X
+    X = inception_B(X)
+    #X = Concatenate(axis=channel_axis)([second, X])
+    X = BatchNormalization(axis=channel_axis)(X)
+    X = Activation('elu')(X)
+    X = inception_reduction_B(X)
+
+    third = 0
+    #X = inception_C(X)
+
+    X = AveragePooling2D(pool_size=(2, 2), padding='valid')(X)
+    X = Flatten()(X)
+    X = Dropout(rate=dropout_rate)(X)
+    X = Dense(num_classes, name='dense_layer')(X)
+    X = Lambda(lambda x: K.l2_normalize(x, axis=1))(X)
+
+    model = Model(inputs, X, name='another model')
+    model.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
+    model.summary()
+
+    return model
