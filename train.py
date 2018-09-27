@@ -1,4 +1,5 @@
 from Model import *
+from old_model import *
 from DataWeight_load import *
 from preprocessing import *
 from Validation import *
@@ -36,7 +37,8 @@ def train():
     # input_shape = (3, 155, 155)
 
     # model = Model_mixed(input_shape, num_classes)
-    model = simpler_face_NN_residualnet(input_shape, num_classes)
+    #model = simpler_face_NN_residualnet(input_shape, num_classes)
+    model = FACE(input_shape)
     model_hint = hint_learn(input_shape, num_classes)
 
     '''

@@ -57,7 +57,11 @@ def Img_load(image_path, img_szie ):
 
             if identity[len(identity)-1] != 'jpg':
                 continue
-
+            '''
+            written by wooram kang 2018.09. 14
+             for broken images, you should check the images if it's okay or not
+            
+            '''
             with open(file, 'rb') as f:
                 check_chars = f.read()[-2:]
                 if check_chars != b'\xff\xd9':
