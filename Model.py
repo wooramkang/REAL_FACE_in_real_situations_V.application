@@ -735,8 +735,8 @@ def hint_learn(input_shape, num_classes):
 def another_trial_model(input_shape, num_classes):
     '''
 
-    IMG_SIZE 196*196
-    NUMCLASS 128-256
+    IMG_SIZE : 196*196
+    F_SIZE : 128 ~ 256
 
     2018.09. 27 written by wooramkang
 
