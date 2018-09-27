@@ -737,6 +737,10 @@ def another_trial_model(input_shape, num_classes):
 
     IMG_SIZE 196*196
     NUMCLASS 128-256
+
+    2018.09. 27 written by wooramkang
+
+    how to apply inception v4 is quite hard topic
     '''
     dropout_rate = 0.4
     print(input_shape)

@@ -307,6 +307,11 @@ def triplet_loss(y_true, y_pred, alpha=0.3):
     return loss
 
 def FACE(input_shape):
+    '''
+
+    IMA_SIZE : 96 * 96
+    F_SIZE : 128 ~ 196
+    '''
     # Define the input as a tensor with shape input_shape
     dropout_rate = 0.4
     X_input = Input(input_shape)
