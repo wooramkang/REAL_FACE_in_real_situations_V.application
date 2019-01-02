@@ -25,6 +25,10 @@ def affine_transform(shape_face, frame):
     w = float(shape_face[46][1]) - float(shape_face[37][1])
     w = float(w / (float(shape_face[46][0]) - float(shape_face[37][0])))
 
+    ## 2018. 11. 19
+    ## betweetn eyes
+    ##
+
     angle = int(cv2.fastAtan2(w, 1))
 
     affine = cv2.getRotationMatrix2D((cols / 2, rows / 2), angle, 1)
@@ -32,7 +36,6 @@ def affine_transform(shape_face, frame):
     cols/2, rows/2 are important
     '''
     dst = cv2.warpAffine(frame, affine, (cols, rows))
-
     return dst
 
 
@@ -46,9 +49,11 @@ def make_transformed_faceset(frame):
     #detect faces in gray scale frame
     rects = detector(gray, 0)
     dst = frame
+
     #determine facial landmarks over the face
     for (i, rect) in enumerate(rects):
         shape = predictor(gray, rect)
+
         #convert facial landmarks to numpy array
         shape = shape_to_np(shape, "int")
         '''

@@ -5,7 +5,7 @@ from __future__ import print_function
 from keras import backend as K
 import time
 from multiprocessing.dummy import Pool
-
+import math
 K.set_image_data_format('channels_first')
 import cv2
 import tensorflow as tf
@@ -579,8 +579,8 @@ def simpler_face_NN(input_shape, num_classes):
     inputs = Input(input_shape, name='model_input')
 
     X = inputs
-    X = dim_decrease(X, input_shape)
-    X = Super_resolution(X, input_shape)
+    #X = dim_decrease(X, input_shape)
+    #X = Super_resolution(X, input_shape)
     X = conv2d_bn(X, 64, 7, 1, strides=(2, 2))
     X = conv2d_bn(X, 64, 1, 7, strides=(2, 2))
     X = MaxPooling2D()(X)
@@ -638,10 +638,10 @@ def simpler_face_NN_residualnet(input_shape, num_classes):
     else:
         channel_axis = -1
     X = inputs
-    X = dim_decrease_residualnet(X, input_shape)
+    #X = dim_decrease_residualnet(X, input_shape)
     #X = Super_resolution(X, input_shape)
-    X = conv2d_bn(X, 128, 7, 1, strides=(2, 1))
-    X = conv2d_bn(X, 128, 1, 7, strides=(1, 2))
+    X = conv2d_bn(X, 128, 5, 5, strides=2)
+    #X = conv2d_bn(X, 128, 1, 7, strides=(1, 2))
     X = MaxPooling2D()(X)
     X = BatchNormalization(axis=channel_axis)(X)
     X = Activation('relu')(X)
@@ -676,11 +676,11 @@ def simpler_face_NN_residualnet(input_shape, num_classes):
     X = Dense(num_classes, name='dense_layer')(X)
     X = Lambda(lambda x: K.l2_normalize(x, axis=1))(X)
 
-    model = Model(inputs, X, name='hint_learn')
-    model.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
-    model.summary()
+    #model = Model(inputs, X, name='hint_learn')
+    #model.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
+    #model.summary()
 
-    return model
+    return X
 
 def hint_learn(input_shape, num_classes):
     '''
@@ -709,9 +709,11 @@ def hint_learn(input_shape, num_classes):
     X = Conv2D(1, step_size, strides=2, activation='relu')(x)
     X = BatchNormalization()(X)
     X = Activation('elu')(X)
+
     X = Conv2D(step_size, 1, strides=2, activation='relu')(X)
     X = BatchNormalization()(X)
     X = Activation('elu')(X)
+
     X = Conv2D(1, step_size, strides=1, activation='relu')(X)
     X = BatchNormalization()(X)
     X = Activation('elu')(X)
@@ -755,7 +757,7 @@ def another_trial_model(input_shape, num_classes):
     X = inputs
     #X = dim_decrease(X, input_shape)
     #X = Super_resolution(X, input_shape)
-    X = ZeroPadding2D((3,3))(X)
+    X = ZeroPadding2D((3, 3))(X)
     X = conv2d_bn(X, int(num_classes/2), 7, 1, strides=(2, 1))
     X = conv2d_bn(X, int(num_classes/2), 1, 7, strides=(1, 2))
     X = MaxPooling2D()(X)
@@ -791,14 +793,101 @@ def another_trial_model(input_shape, num_classes):
     third = 0
     #X = inception_C(X)
 
-    X = AveragePooling2D(pool_size=(2, 2), padding='valid')(X)
+    #X = AveragePooling2D(pool_size=(2, 2), padding='valid')(X)
     X = Flatten()(X)
     #X = Dropout(rate=dropout_rate)(X)
     X = Dense(num_classes, name='dense_layer')(X)
     X = Lambda(lambda x: K.l2_normalize(x, axis=1))(X)
 
-    model = Model(inputs, X, name='another model')
-    model.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
+    #model = Model(inputs, X, name='another model')
+    #model.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
+    #model.summary()
+
+    return X
+
+
+def small_net(epo, input):
+    x = []
+    t_net = Conv2D(8, 5, 2)(input)
+    x.append(t_net)
+
+    for i in range(epo-1):
+        print(i)
+        temp = int(math.pow(2, (i+4)))
+        t_net = Conv2D(filters= temp,  kernel_size=5, strides=2, padding='same')(x[i])
+        x.append(t_net)
+        l_temp = temp
+
+    temp_o = Conv2DTranspose( int(l_temp/2), 5, 2)(x[epo - 1])
+    temp_r = Concatenate()( [temp_o, x[epo - 2]] )
+
+    o = []
+    r = []
+    o.append(temp_o)
+    r.append(temp_r)
+
+    for i in range(epo-1):
+        temp = math.pow(2, (3 + epo) - (i + 4))
+        temp_o = Conv2DTranspose(temp, 5, 2)(r[i])
+        temp_r = Concatenate()(temp_o, x[epo-(i+1)])
+        o.append(temp_o)
+        r.append(temp_r)
+
+    return o[epo-1]
+
+
+def temp_net(input_shape):
+    epo = 7
+    s_net = []
+    input_shape = list(input_shape)
+    input_shape[1] = input_shape[1] *2
+    input_shape[2] = input_shape[2] * 2
+    input_shape = tuple(input_shape)
+
+    for i in range(epo):
+        input_shape = list(input_shape)
+        input_shape[1] = input_shape[1]/2
+        input_shape[2] = input_shape[2]/ 2
+        input_shape = tuple(input_shape)
+
+        inputs = Input(input_shape, name='model_input')
+        X = inputs
+        s = small_net(7-i, X)
+        s = Model(s)
+        s.summary()
+        s_net.append(s)
+
+
+def output_net(X):
+
+    X = Dense(640, name='dense_layer')(X)
+    X = LeakyReLU(0.2)(X)
+    X = BatchNormalization()(X)
+
+    X = Dense(512)(X)
+    X = LeakyReLU(0.2)(X)
+    X = BatchNormalization()(X)
+
+    X = Dense(256)(X)
+    X = LeakyReLU(0.2)(X)
+    X = BatchNormalization()(X)
+
+    X = Dense(128)(X)
+    X = LeakyReLU(0.2)(X)
+
+    #128
+    # L2 normalization
+    #X = Lambda(lambda x: K.l2_normalize(x, axis=1))(X)
+    X = Dense(8, activation='softmax')(X)
+
+    # Create model instance
+    model = Model(inputs=X_input, outputs=X, name='FaceRecoModel')
+    #model.compile(optimizer='adam', loss=triplet_loss, metrics=['accuracy'])
+    model.compile(optimizer='adam', loss='mse', metrics=['accuracy'])
     model.summary()
 
     return model
+
+
+
+

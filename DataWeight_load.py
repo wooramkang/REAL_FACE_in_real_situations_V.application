@@ -9,7 +9,8 @@ from numpy import genfromtxt
 import cv2
 import PIL
 import keras
-from keras.models import Model
+from preprocessing import *
+from remove_shadow import *
 
 '''
 def Img_load(image_path, img_szie ):
@@ -55,13 +56,9 @@ def Img_load(image_path, img_szie ):
         for file in glob.glob(image_path+name+"/*"):
             identity = str(file).split('.')
 
-            if identity[len(identity)-1] != 'jpg':
-                continue
-            '''
-            written by wooram kang 2018.09. 14
-             for broken images, you should check the images if it's okay or not
-            
-            '''
+            #if identity[len(identity)-1] != 'jpg':
+            #    continue
+
             with open(file, 'rb') as f:
                 check_chars = f.read()[-2:]
                 if check_chars != b'\xff\xd9':
@@ -72,14 +69,22 @@ def Img_load(image_path, img_szie ):
                     img_ = cv2.imread(file)
 
             count =count + 1
+
             gray = cv2.cvtColor(img_, cv2.COLOR_BGR2GRAY)
             faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+
             for (x, y, w, h) in faces:
-                sub_img = img_[y:y+h, x:x+w]
+                sub_img = img_[y:y + h, x:x + w]
                 sub_img = cv2.resize(sub_img, (img_szie, img_szie))
+                sub_imgs, _ = Removing_light([sub_img])
+                sub_img = sub_imgs[0]
+                sub_img = remove_shadow(sub_img)
+                #sub_img = cv2.cvtColor(sub_img, cv2.COLOR_BGR2GRAY)
+                #sub_img = np.reshape(sub_img, (sub_img.shape[0], sub_img.shape[1], -1))
                 sub_img = np.transpose(sub_img, (2, 0, 1))
                 x_data.append(sub_img)
                 y_data.append(name)
+
             '''
             img_ = cv2.resize(img_, (img_szie, img_szie))
             img_ = np.transpose(img_, (2, 0, 1))
@@ -88,11 +93,11 @@ def Img_load(image_path, img_szie ):
             #identity = str(identity).split('_')[0]
             #y_data.append(identity)
             y_data.append(name)
-            '''
-            del img_
 
-            if count == 3:
-                break
+            #del img_
+            '''
+            #if count == 3:
+                #break
 
     print(len(x_data))
     print(len(y_data))
@@ -113,7 +118,10 @@ def split_embed_groundtruth(raw_data):
     for j in raw_data:
         for i, ans in enumerate(ans_set):
             if j == ans:
-                dist.append(i)
+                temp = [0 for k in range(8)]
+                temp[i] = 1
+                #dist.append(i)
+                dist.append(temp)
                 break
 
     return ans_set, np.array(dist)
@@ -122,6 +130,7 @@ def split_embed_groundtruth(raw_data):
 def Data_split(x_data, y_data):
     #params
     train_test_ratio = 0.7
+    #train_test_ratio = 1
 
     x_train = []
     y_train = []
@@ -148,3 +157,6 @@ def Data_split(x_data, y_data):
 def Weight_load(model, weights_path):
     model.load_weights(weights_path)
     return model
+
+
+

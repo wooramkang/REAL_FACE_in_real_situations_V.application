@@ -6,17 +6,23 @@ import os
 import sys
 sys.path.append(os.path.abspath((os.path.dirname(__file__)))+'/preprocessing')
 print(os.path.abspath((os.path.dirname(__file__)))+'/preprocessing')
+
 import histogram_equalization as hist
 import detect_landmarks_plus_affineTransform as affine
+#from remove_shadow import *
+import numpy as np
 
 def Removing_light(x_train=None, x_test=None):
+    x_test_prime = None
+    x_train_prime = None
 
     if x_train is not None:
         x_train_prime = []
+
         for _img in x_train:
             _img = hist.preprocessing_hist(_img)
             x_train_prime.append(_img)
-        x_train = np.array(x_train_prime)
+        #x_train = np.array(x_train_prime)
     else:
         pass
 
@@ -26,11 +32,11 @@ def Removing_light(x_train=None, x_test=None):
             _img = hist.preprocessing_hist(_img)
             x_test_prime.append(_img)
 
-        x_test = np.array(x_test_prime)
+        #x_test = np.array(x_test_prime)
     else:
         pass
 
-    return x_train, x_test
+    return x_train_prime, x_test_prime
 
 
 def Make_embedding(x_train=None, x_test=None):

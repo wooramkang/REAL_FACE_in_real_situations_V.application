@@ -27,7 +27,8 @@ def preprocessing_hist(img):
     if width % 20 != 0:
         width = width + (width % 24)
     """
-    img= cv2.resize(img, (width, height))
+    #img= cv2.resize(img, (width, height))
+
     img = to_Lab(img)
     lumin, a, b = cv2.split(img)
     clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
@@ -39,6 +40,7 @@ def preprocessing_hist(img):
     img = cv2.cvtColor(img, cv2.COLOR_LAB2LRGB)
 
     return img
+
 
 def preprocessing_hist_nagative(img):
     height, width = img.shape[:2]
@@ -58,7 +60,11 @@ def preprocessing_hist_nagative(img):
     img= cv2.resize(img, (width, height))
     img = to_Lab(img)
     lumin, a, b = cv2.split(img)
+
     clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
+    ## ?
+    ## ?
+
     lumin_prime = clahe.apply(lumin)
     img = cv2.merge((lumin_prime, a, b))
     img_prime=to_negative(img)

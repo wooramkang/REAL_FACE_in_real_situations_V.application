@@ -99,3 +99,67 @@ def Validation(model, data_ans_raw, data_ans_emb, data_embedd, data_predicted):
     print(str(int(((total_count-cor_count)/total_count)*100)))
     '''
     return 1
+def Validation_softmax(model, data_ans_raw, data_ans_emb, data_embedd, data_predicted):
+    '''
+    Validation(model, y_test, y_test_ans, y_test_embed, predict_test)
+    predict_test => target vector
+    y_test_embed => class_embedd ( 0 to number of classes)
+    y_test_ans => class_name
+    data_ans_raw => serial list of class
+    '''
+    arr_inx = list(range(len(data_predicted)))
+    shuffle(arr_inx)
+    total_count = 0
+    cor_count = 0
+    extra = 0
+    same_count = 0
+    wrong_count = 0
+    valid_set = []
+    valid_idx = []
+    min_idx = []
+    # print(arr_inx)
+    print(data_embedd)
+    print(data_ans_emb)
+    print(data_ans_raw)
+    print("=====================")
+    val_ans_emb = []
+
+    for i in data_predicted:
+        max = 0
+        idx = 0
+        count = 0
+        for j in i:
+            if j > max:
+                max = j
+                idx = count
+
+            count= count+1
+
+        print(max)
+        print(idx)
+        temp = [0 for k in range(8)]
+        temp[idx] = 1
+        val_ans_emb.append(temp)
+
+    val_ans_emb = np.array(val_ans_emb)
+    print(val_ans_emb)
+    print(data_embedd)
+    print(data_ans_emb)
+    print(data_ans_raw)
+    count = 0
+    t = 0
+    for i in val_ans_emb:
+        #print(i)
+        v = 0
+        for k in i:
+            if k != data_embedd[t][v]:
+                count = count + 1
+                break
+            v= v+1
+        t = t+1
+
+    print(count)
+    t= len(val_ans_emb)
+    t= (t-count)/t * 100
+    print(t)
+    return 1
